@@ -1,0 +1,23 @@
+# Git
+.git
+.gitignore
+
+# Python
+backend/venv
+backend/__pycache__
+backend/*.pyc
+backend/.pytest_cache
+backend/.coverage
+backend/tests/__pycache__
+
+# Node
+frontend/node_modules
+frontend/dist
+frontend/coverage
+frontend/.DS_Store
+
+# Local Env
+.env
+api_key
+backend/uploads/*
+backend/static/audio/*

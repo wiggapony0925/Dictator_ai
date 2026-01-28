@@ -2,18 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { handleApiError } from '../errorHandler';
 import axios from 'axios';
 
-describe('handleApiError', () => {
-    it('returns empty string if request is cancelled', () => {
-        const error = { name: 'CanceledError', __CANCEL__: true }; // Rough approximation of axios cancel
 
-        // Mock axios.isCancel to return true
-        // We can't easily spy on the imported axios directly in this way without vi.mock behavior
-        // But handleApiError imports axios. We can't change that behavior easily unit-wise without mocking the module.
-        // Let's rely on standard object matching or mock the module.
-    });
-
-    // Actually, getting axios.isCancel to recognize the error object requires mocking the axios module.
-});
 
 // Mock axios
 // We need to match the default export structure properly

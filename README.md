@@ -64,31 +64,36 @@ npm run dev
 ```
 Open [http://localhost:5173](http://localhost:5173).
 
-## 🐳 Deployment (Production)
+## 🐳 Deployment (Recommended)
 
-### Option 1: Docker (Recommended)
-This runs both Frontend and Backend in a single container.
+The easiest way to run Dictator AI (Frontend + Backend) is with Docker.
+
+### 1. Build the Image
 ```bash
-# Build the image
 docker build -t dictator-ai .
-
-# Run container (Port 8080)
-docker run -p 8080:8080 -e OPENAI_API_KEY=sk-... dictator-ai
 ```
-Visit http://localhost:8080
 
-### Option 2: Manual Build
+### 2. Run the Container
+You must provide your OpenAI API Key.
+```bash
+docker run -p 8080:5001 -e OPENAI_API_KEY=sk-your-key-here dictator-ai
+```
+Now visit **http://localhost:8080** in your browser.
+
+### Option 2: Manual Run
 1. **Frontend**:
    ```bash
    cd frontend
-   npm run build
-   # Copy ./dist contents to backend/static or configure Nginx
+   npm install && npm run build
    ```
 2. **Backend**:
    ```bash
    cd backend
-   gunicorn -w 4 -b 0.0.0.0:5000 app:app
+   pip install -r requirements.txt
+   # The backend will now automatically serve the built frontend at root /
+   gunicorn -w 4 -b 0.0.0.0:5001 app:app
    ```
+   Visit http://localhost:5001
 
 ## 🌟 New Features (v2.0)
 - **Auto-Read**: Instant analysis on file drag-and-drop.

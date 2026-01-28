@@ -1,7 +1,14 @@
 {
-  "name": "frontend",
+  "name": "dictator-ai",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Intelligent PDF Reader with AI-powered Text-to-Speech",
+  "author": "Jeffrey Fernandez",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wiggapony0925/Dictator_ai"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
