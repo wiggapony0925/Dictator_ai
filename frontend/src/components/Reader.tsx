@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { Box, Card, Text } from '@radix-ui/themes';
 
 interface Segment {
     id: number;
@@ -13,7 +14,6 @@ interface ReaderProps {
 }
 
 export const Reader: React.FC<ReaderProps> = ({
-    pdfUrl,
     segments,
     currentSegmentIndex,
     onSegmentClick,
@@ -26,40 +26,43 @@ export const Reader: React.FC<ReaderProps> = ({
         }
     }, [currentSegmentIndex]);
 
-    return (
-        <main className="split-view" id="main-view">
-            {/* Left: PDF Viewer */}
-            <div className="panel pdf-panel">
-                <h2 className="panel-title">Original Document</h2>
-                <iframe id="pdf-frame" src={pdfUrl} title="PDF Viewer" />
-            </div>
+    if (segments.length === 0) {
+        return (
+            <Box p="5">
+                <Text color="gray" size="2">Upload a PDF to see text segments here.</Text>
+            </Box>
+        )
+    }
 
-            {/* Right: Reader Mode */}
-            <div className="panel reader-panel">
-                <h2 className="panel-title">Reader View</h2>
-                <div id="segments-container" className="segments-list">
-                    {segments.length === 0 ? (
-                        <div className="placeholder" style={{ padding: '2rem', color: '#94a3b8' }}>
-                            Upload a PDF to start reading...
-                        </div>
-                    ) : (
-                        <>
-                            {segments.map((seg, index) => (
-                                <div
-                                    key={index}
-                                    ref={index === currentSegmentIndex ? activeRef : null}
-                                    className={`segment ${index === currentSegmentIndex ? 'active' : ''}`}
-                                    onClick={() => onSegmentClick(index)}
-                                >
-                                    {seg.text}
-                                </div>
-                            ))}
-                            {/* Padding for player */}
-                            <div style={{ height: '100px' }} />
-                        </>
-                    )}
-                </div>
-            </div>
-        </main>
+    return (
+        <Box p="4">
+            {segments.map((seg, index) => {
+                const isActive = index === currentSegmentIndex;
+                return (
+                    <Box
+                        key={index}
+                        ref={isActive ? activeRef : null}
+                        onClick={() => onSegmentClick(index)}
+                        mb="3"
+                        style={{ cursor: 'pointer' }}
+                    >
+                        <Card variant={isActive ? "classic" : "ghost"} style={{ transition: 'all 0.2s', backgroundColor: isActive ? 'var(--accent-a3)' : 'transparent' }}>
+                            <Text
+                                size="3"
+                                style={{
+                                    lineHeight: '1.6',
+                                    color: isActive ? 'var(--accent-11)' : 'var(--gray-11)',
+                                    fontWeight: isActive ? 500 : 400
+                                }}
+                            >
+                                {seg.text}
+                            </Text>
+                        </Card>
+                    </Box>
+                );
+            })}
+            {/* Spacer for player */}
+            <Box height="100px" />
+        </Box>
     );
 };

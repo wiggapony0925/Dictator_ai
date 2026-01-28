@@ -56,6 +56,7 @@ coverage.xml
 cover/
 
 # Uploads and generated audio
+static/
 uploads/
 static/audio/
 

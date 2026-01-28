@@ -1,9 +1,10 @@
-
+import { Flex, Heading, Text, Button, Box, Card } from '@radix-ui/themes';
+import { useDictator } from './hooks/useDictator';
 import { Player } from './components/Player';
 import { Reader } from './components/Reader';
 import { SettingsDialog } from './components/SettingsDialog';
-import { useDictator } from './hooks/useDictator';
-import './global.css';
+import { PDFHighlighter } from './components/PDFHighlighter';
+import { Upload } from 'lucide-react';
 
 function App() {
   const {
@@ -23,21 +24,23 @@ function App() {
     togglePlay
   } = useDictator();
 
+  const currentSegment = currentSegmentIndex >= 0 && currentSegmentIndex < segments.length
+    ? segments[currentSegmentIndex]
+    : null;
+
   return (
     <div className="app-container">
-      {/* Sidebar */}
-      <header className="sidebar">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="brand">
-            <h1>Dictator AI</h1>
-            <p>Interactive PDF Reader</p>
-          </div>
-          <SettingsDialog apiKey={apiKey} setApiKey={setApiKey} />
-        </div>
+      {/* Navbar */}
+      <div className="navbar">
+        <div className="navbar-content">
+          <Box>
+            <Heading size="5" weight="bold" highContrast>Dictator AI</Heading>
+            <Text size="2" color="gray">Interactive PDF Reader</Text>
+          </Box>
 
-        <div className="controls">
-          <form onSubmit={handleConvert}>
-            <div className="file-input-wrapper">
+          <Flex className="controls" gap="3" align="center">
+            <form onSubmit={handleConvert} style={{ display: 'flex', gap: '10px', alignItems: 'center', width: '100%' }}>
+              {/* Hidden Input */}
               <input
                 type="file"
                 id="file"
@@ -45,67 +48,76 @@ function App() {
                 hidden
                 onChange={handleFileChange}
               />
-              <button
+
+              <Button
+                variant="surface"
                 type="button"
-                className="btn secondary"
                 onClick={() => document.getElementById('file')?.click()}
               >
-                Select PDF
-              </button>
-              <span id="filename">{file ? file.name : 'No file selected'}</span>
-            </div>
+                <Upload size={16} />
+                {file ? file.name : 'Select PDF'}
+              </Button>
 
-            <button
-              type="submit"
-              className="btn primary"
-              disabled={isLoading || !file}
-            >
-              Load & Read
-            </button>
-          </form>
+              <Button type="submit" disabled={!file || isLoading}>
+                {isLoading ? 'Processing...' : 'Read'}
+              </Button>
+            </form>
+
+            <SettingsDialog apiKey={apiKey} setApiKey={setApiKey} />
+          </Flex>
         </div>
-      </header>
+      </div>
 
-      {/* Main Content */}
-      <Reader
-        pdfUrl={pdfUrl}
-        segments={segments}
-        currentSegmentIndex={currentSegmentIndex}
-        onSegmentClick={playSegment}
-      />
+      {/* Main Content: Split View */}
+      <div className="main-grid">
+        {/* Left: PDF with Highlighter */}
+        <div className="panel-left">
+          {pdfUrl ? (
+            <PDFHighlighter
+              pdfUrl={pdfUrl}
+              currentSegment={currentSegment}
+            />
+          ) : (
+            <Flex align="center" justify="center" style={{ height: '100%' }}>
+              <Text color="gray">No PDF loaded</Text>
+            </Flex>
+          )}
+        </div>
 
-      {/* Player */}
+        {/* Right: Reader */}
+        <div className="panel-right">
+          <Reader
+            pdfUrl={pdfUrl}
+            segments={segments}
+            currentSegmentIndex={currentSegmentIndex}
+            onSegmentClick={playSegment}
+          />
+        </div>
+      </div>
+
+      {/* Floating Player */}
       {segments.length > 0 && (
-        <Player
-          currentSegmentIndex={currentSegmentIndex}
-          totalSegments={segments.length}
-          isPlaying={isPlaying}
-          onPlayPause={togglePlay}
-          onSeek={playSegment}
-        />
-      )}
-
-      {/* Overlays */}
-      {isLoading && (
-        <div className="overlay">
-          <div className="spinner"></div>
-          <p style={{ marginTop: '1rem' }}>Processing PDF...</p>
+        <div className="player-wrapper">
+          <Player
+            currentSegmentIndex={currentSegmentIndex}
+            totalSegments={segments.length}
+            isPlaying={isPlaying}
+            onPlayPause={togglePlay}
+            onSeek={playSegment}
+          />
         </div>
       )}
 
+      {/* Error Toast */}
       {error && (
-        <div className="overlay">
-          <div className="error-box">
-            <h3>Error</h3>
-            <p id="error-msg">{error}</p>
-            <button
-              className="btn secondary"
-              onClick={() => setError(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        <Box position="absolute" top="5" right="5" style={{ zIndex: 20 }}>
+          <Card style={{ backgroundColor: 'var(--red-3)', color: 'var(--red-11)' }}>
+            <Flex gap="3" align="center">
+              <Text>{error}</Text>
+              <Button size="1" color="red" variant="soft" onClick={() => setError(null)}>X</Button>
+            </Flex>
+          </Card>
+        </Box>
       )}
     </div>
   );

@@ -1,6 +1,8 @@
 export interface Segment {
     id: number;
     text: string;
+    page: number;
+    bbox: [number, number, number, number]; // [x0, y0, x1, y1] from PyMuPDF
 }
 
 export interface ConvertResponse {

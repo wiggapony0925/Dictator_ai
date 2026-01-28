@@ -1,7 +1,6 @@
 import React from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
-import { Settings, X } from 'lucide-react';
-import './SettingsDialog.css';
+import { Dialog, Button, Flex, TextField, Text, IconButton } from '@radix-ui/themes';
+import { Settings } from 'lucide-react';
 
 interface SettingsDialogProps {
     apiKey: string;
@@ -11,48 +10,44 @@ interface SettingsDialogProps {
 export const SettingsDialog: React.FC<SettingsDialogProps> = ({ apiKey, setApiKey }) => {
     return (
         <Dialog.Root>
-            <Dialog.Trigger asChild>
-                <button className="icon-btn" aria-label="Settings">
-                    <Settings size={20} color="#94a3b8" />
-                </button>
+            <Dialog.Trigger>
+                <IconButton variant="ghost" color="gray">
+                    <Settings size={20} />
+                </IconButton>
             </Dialog.Trigger>
-            <Dialog.Portal>
-                <Dialog.Overlay className="DialogOverlay" />
-                <Dialog.Content className="DialogContent">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <Dialog.Title className="DialogTitle">Settings</Dialog.Title>
-                        <Dialog.Close asChild>
-                            <button className="icon-btn" aria-label="Close">
-                                <X size={20} color="#94a3b8" />
-                            </button>
-                        </Dialog.Close>
-                    </div>
 
-                    <Dialog.Description className="DialogDescription">
-                        Enter your OpenAI API key to enable text-to-speech.
-                    </Dialog.Description>
+            <Dialog.Content maxWidth="450px">
+                <Dialog.Title>Settings</Dialog.Title>
+                <Dialog.Description size="2" mb="4">
+                    Enter your OpenAI API key to enable text-to-speech.
+                </Dialog.Description>
 
-                    <fieldset className="Fieldset">
-                        <label className="Label" htmlFor="apiKey">
+                <Flex direction="column" gap="3">
+                    <label>
+                        <Text as="div" size="2" mb="1" weight="bold">
                             API Key
-                        </label>
-                        <input
-                            className="Input"
-                            id="apiKey"
-                            type="password"
+                        </Text>
+                        <TextField.Root
                             value={apiKey}
-                            onChange={(e) => setApiKey(e.target.value)}
+                            // Cast event target value correctly
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApiKey(e.target.value)}
                             placeholder="sk-..."
+                            type="password"
                         />
-                    </fieldset>
+                    </label>
+                </Flex>
 
-                    <div style={{ display: 'flex', marginTop: 25, justifyContent: 'flex-end' }}>
-                        <Dialog.Close asChild>
-                            <button className="btn primary">Save changes</button>
-                        </Dialog.Close>
-                    </div>
-                </Dialog.Content>
-            </Dialog.Portal>
+                <Flex gap="3" mt="4" justify="end">
+                    <Dialog.Close>
+                        <Button variant="soft" color="gray">
+                            Cancel
+                        </Button>
+                    </Dialog.Close>
+                    <Dialog.Close>
+                        <Button>Save</Button>
+                    </Dialog.Close>
+                </Flex>
+            </Dialog.Content>
         </Dialog.Root>
     );
 };

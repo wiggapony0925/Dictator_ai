@@ -4,3 +4,35 @@
 [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
  * Running on http://127.0.0.1:5001
 [33mPress CTRL+C to quit[0m
+127.0.0.1 - - [28/Jan/2026 10:03:39] "POST /convert HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:03:39] "GET /uploads/jeffreys_resume.pdf HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:03:50] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:03:50] "[35m[1mGET /static/audio/94e6a7c1-0a85-4ae3-9fab-8b0ebd6b5681.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:03:55] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:03:55] "[35m[1mGET /static/audio/01460276-5d4f-41fb-9f8f-f8a884d43e8e.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:04:35] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:04:35] "[35m[1mGET /static/audio/1132c2c1-68bd-46e8-a14d-71ddb1b18c37.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:04:49] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:04:49] "[35m[1mGET /static/audio/f76b4af0-cfb7-40e7-8de0-348f8ac71f08.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:05:05] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:05:06] "[35m[1mGET /static/audio/0736b797-b669-4770-8cdf-1e49ba8be2c4.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:05:18] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:05:18] "[35m[1mGET /static/audio/c1109d8d-6020-4be0-9105-b11d0f27974c.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:05:30] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:05:30] "[35m[1mGET /static/audio/4502d9ba-956b-43e8-b9c8-9b4a072bcca7.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:05:32] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:05:32] "[35m[1mGET /static/audio/d6d4666d-eb4a-4216-96d4-8f3013a6a920.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:05:33] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:05:33] "[35m[1mGET /static/audio/007f7ba9-e2f6-4d78-9712-f8b046458d39.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:05:38] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:05:38] "[35m[1mGET /static/audio/16ab09ca-f978-436e-b17b-9e17071fd0fb.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:05:39] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:05:39] "[35m[1mGET /static/audio/144fd69e-b18d-4d22-ba66-9fd6fbf0879d.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:05:50] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:05:50] "[35m[1mGET /static/audio/89f324ab-095f-4c84-9fa7-98f338d18b13.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:06:53] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:06:53] "[35m[1mGET /static/audio/c8a33d87-f48f-4f76-b787-959b40e168c6.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:07:07] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:07:07] "[35m[1mGET /static/audio/41c210e4-29ae-4fde-aa63-90a07f13589e.mp3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [28/Jan/2026 10:07:35] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [28/Jan/2026 10:07:35] "[35m[1mGET /static/audio/fa3141d6-4fa8-4817-9ae1-0c59b8ccec55.mp3 HTTP/1.1[0m" 206 -

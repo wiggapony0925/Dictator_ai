@@ -68,7 +68,15 @@ export const useDictator = () => {
 
             const audioUrl = res.data.audio_url;
             audioRef.current.src = audioUrl;
-            audioRef.current.play();
+
+            // Ensure we catch playback errors (e.g. mobile restriction without interaction)
+            const playPromise = audioRef.current.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(err => {
+                    console.error("Playback failed:", err);
+                    setIsPlaying(false);
+                });
+            }
         } catch (err: any) {
             console.error("Audio error:", err);
             setError(err.response?.data?.error || "Failed to play audio");
@@ -93,7 +101,7 @@ export const useDictator = () => {
         }
     };
 
-    // Audio Event Listeners
+    // Audio Event Listeners (Ended & Media Session)
     useEffect(() => {
         const audio = audioRef.current;
 
@@ -106,10 +114,48 @@ export const useDictator = () => {
         };
 
         audio.addEventListener('ended', handleEnded);
+
+        // --- Media Session API Integration ---
+        if ('mediaSession' in navigator && currentSegmentIndex !== -1 && segments.length > 0) {
+            // Set metadata
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: `Segment ${currentSegmentIndex + 1} of ${segments.length}`,
+                artist: 'Dictator AI',
+                album: file ? file.name : 'Document Reader',
+                // Placeholder artwork or app icon could go here
+            });
+
+            // Action handlers
+            navigator.mediaSession.setActionHandler('play', () => {
+                // If paused, resume or play
+                if (audio.paused) {
+                    audio.play();
+                    setIsPlaying(true);
+                }
+            });
+            navigator.mediaSession.setActionHandler('pause', () => {
+                if (!audio.paused) {
+                    audio.pause();
+                    setIsPlaying(false);
+                }
+            });
+            navigator.mediaSession.setActionHandler('previoustrack', () => {
+                if (currentSegmentIndex > 0) {
+                    playSegment(currentSegmentIndex - 1);
+                }
+            });
+            navigator.mediaSession.setActionHandler('nexttrack', () => {
+                if (currentSegmentIndex < segments.length - 1) {
+                    playSegment(currentSegmentIndex + 1);
+                }
+            });
+        }
+
         return () => {
             audio.removeEventListener('ended', handleEnded);
+            // Clean up handlers if needed, though they usually overwrite
         };
-    }, [currentSegmentIndex, segments, apiKey]);
+    }, [currentSegmentIndex, segments, apiKey, file]);
 
     return {
         apiKey,

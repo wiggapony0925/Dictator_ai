@@ -2,7 +2,7 @@ import os
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-from services.pdf_handler import extract_text_from_pdf, split_into_sentences
+from services.pdf_handler import extract_sentences_with_coordinates
 from services.tts_handler import convert_text_to_speech
 import os
 
@@ -33,14 +33,11 @@ def convert():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
 
-            # 1. Extract Text
-            full_text = extract_text_from_pdf(filepath)
+            # 1. Extract Text with Coordinates
+            raw_segments = extract_sentences_with_coordinates(filepath)
             
-            # 2. Split into sentences
-            sentences = split_into_sentences(full_text)
-            
-            # 3. Create segments structure
-            segments = [{"id": i, "text": s} for i, s in enumerate(sentences)]
+            # 2. Add IDs to segments
+            segments = [{"id": i, **seg} for i, seg in enumerate(raw_segments)]
             
             # Return JSON structure for the frontend
             return jsonify({

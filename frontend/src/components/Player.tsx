@@ -1,5 +1,5 @@
-import React from 'react';
-import * as Slider from '@radix-ui/react-slider';
+import React, { useState, useEffect } from 'react';
+import { Card, Flex, IconButton, Slider, Text, Box } from '@radix-ui/themes';
 import { Play, Pause } from 'lucide-react';
 
 interface PlayerProps {
@@ -10,8 +10,6 @@ interface PlayerProps {
     onSeek: (value: number) => void;
 }
 
-
-
 export const Player: React.FC<PlayerProps> = ({
     currentSegmentIndex,
     totalSegments,
@@ -19,34 +17,48 @@ export const Player: React.FC<PlayerProps> = ({
     onPlayPause,
     onSeek,
 }) => {
-    const displayIndex = currentSegmentIndex === -1 ? 0 : currentSegmentIndex;
+    // Local state for smooth sliding without waiting for audio
+    const [localValue, setLocalValue] = useState([0]);
+    const [isDragging, setIsDragging] = useState(false);
+
+    // Sync with prop when not dragging
+    useEffect(() => {
+        if (!isDragging && currentSegmentIndex !== -1) {
+            setLocalValue([currentSegmentIndex]);
+        }
+    }, [currentSegmentIndex, isDragging]);
+
+    const handleValueChange = (vals: number[]) => {
+        setIsDragging(true);
+        setLocalValue(vals);
+    };
+
+    const handleValueCommit = (vals: number[]) => {
+        setIsDragging(false);
+        onSeek(vals[0]);
+    };
 
     return (
-        <div className="floating-player">
-            <div className="player-content">
-                <button className="play-btn" onClick={onPlayPause}>
-                    {isPlaying ? <Pause size={24} fill="white" /> : <Play size={24} fill="white" />}
-                </button>
+        <Card size="2" style={{ width: '400px', backdropFilter: 'blur(10px)', backgroundColor: 'var(--color-panel-translucent)' }}>
+            <Flex align="center" gap="4">
+                <IconButton size="3" variant="soft" onClick={onPlayPause} radius="full">
+                    {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+                </IconButton>
 
-                <div className="slider-container">
-                    <span id="current-time">{displayIndex + 1}</span>
-
-                    <Slider.Root
-                        className="SliderRoot"
-                        value={[displayIndex]}
-                        max={totalSegments - 1}
+                <Box style={{ flex: 1 }}>
+                    <Flex justify="between" mb="1">
+                        <Text size="1" color="gray">{localValue[0] + 1}</Text>
+                        <Text size="1" color="gray">{totalSegments}</Text>
+                    </Flex>
+                    <Slider
+                        value={localValue}
+                        max={Math.max(0, totalSegments - 1)}
                         step={1}
-                        onValueChange={(vals) => onSeek(vals[0])}
-                    >
-                        <Slider.Track className="SliderTrack">
-                            <Slider.Range className="SliderRange" />
-                        </Slider.Track>
-                        <Slider.Thumb className="SliderThumb" aria-label="Seek" />
-                    </Slider.Root>
-
-                    <span id="total-time">{totalSegments} segs</span>
-                </div>
-            </div>
-        </div>
+                        onValueChange={handleValueChange}
+                        onValueCommit={handleValueCommit}
+                    />
+                </Box>
+            </Flex>
+        </Card>
     );
 };
