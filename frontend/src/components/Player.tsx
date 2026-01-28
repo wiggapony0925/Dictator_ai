@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Flex, IconButton, Slider, Text, Box } from '@radix-ui/themes';
+import { Card, Flex, IconButton, Text, Box } from '@radix-ui/themes';
+import * as SliderPrimitive from '@radix-ui/react-slider';
 import { Play, Pause } from 'lucide-react';
 
 interface PlayerProps {
@@ -39,24 +40,36 @@ export const Player: React.FC<PlayerProps> = ({
     };
 
     return (
-        <Card size="2" style={{ width: '400px', backdropFilter: 'blur(10px)', backgroundColor: 'var(--color-panel-translucent)' }}>
+        <Card size="2" className="player-card">
             <Flex align="center" gap="4">
-                <IconButton size="3" variant="soft" onClick={onPlayPause} radius="full">
+                <IconButton size="3" variant="soft" onClick={onPlayPause} radius="full" className="player-play-btn">
                     {isPlaying ? <Pause size={20} /> : <Play size={20} />}
                 </IconButton>
 
                 <Box style={{ flex: 1 }}>
                     <Flex justify="between" mb="1">
-                        <Text size="1" color="gray">{localValue[0] + 1}</Text>
-                        <Text size="1" color="gray">{totalSegments}</Text>
+                        <Text size="1" color="gray" weight="medium">
+                            Segment {localValue[0] + 1}
+                        </Text>
+                        <Text size="1" color="gray" weight="medium">
+                            {totalSegments}
+                        </Text>
                     </Flex>
-                    <Slider
+
+                    {/* Radix Primitive Slider */}
+                    <SliderPrimitive.Root
+                        className="SliderRoot"
                         value={localValue}
                         max={Math.max(0, totalSegments - 1)}
                         step={1}
                         onValueChange={handleValueChange}
                         onValueCommit={handleValueCommit}
-                    />
+                    >
+                        <SliderPrimitive.Track className="SliderTrack">
+                            <SliderPrimitive.Range className="SliderRange" />
+                        </SliderPrimitive.Track>
+                        <SliderPrimitive.Thumb className="SliderThumb" aria-label="Volume" />
+                    </SliderPrimitive.Root>
                 </Box>
             </Flex>
         </Card>

@@ -1,0 +1,9 @@
+@use '../abstracts/variables' as *;
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: $color-bg-app;
+    color: $color-text-primary;
+    overflow: hidden; // Prevent body scroll, app handles it
+}

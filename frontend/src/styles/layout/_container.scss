@@ -1,0 +1,10 @@
+@use '../abstracts/variables' as *;
+
+.app-shell {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: $color-bg-app;
+    color: $color-text-primary;
+}

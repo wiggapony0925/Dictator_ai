@@ -1,0 +1,35 @@
+@use '../abstracts/variables' as *;
+
+.dropzone {
+    border: 2px dashed $color-border;
+    border-radius: $radius-4;
+    padding: $spacing-6;
+    background-color: transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+        border-color: $color-primary;
+        background-color: rgba($color-primary, 0.02);
+
+        .dropzone__icon-wrapper {
+            transform: scale(1.1);
+            color: $color-primary;
+        }
+    }
+
+    &--active {
+        border-color: $color-primary;
+        background-color: rgba($color-primary, 0.05);
+        transform: scale(0.99);
+    }
+
+    &__icon-wrapper {
+        color: var(--gray-8);
+        transition: all 0.3s ease;
+    }
+}

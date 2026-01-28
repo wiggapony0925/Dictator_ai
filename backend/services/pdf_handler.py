@@ -33,21 +33,12 @@ def extract_sentences_with_coordinates(file_path):
             word_text = w[4]
             current_sentence_words.append(w)
             
-            # Check if this word ends a sentence
-            # We check if the word text itself ends with punctuation 
-            # OR if we just want to accumulate. 
-            # Note: get_text("words") usually separates punctuation if it can, 
-            # but sometimes it sticks e.g. "end."
-            
             # Simple check: does the word end with . ! ?
             if re.search(r'[.!?]$', word_text):
                 # End of sentence
                 segments.append(create_segment(current_sentence_words, page_num))
                 current_sentence_words = []
         
-        # If words remain at end of page, either append to last or flush.
-        # For this PDF to Audio case, flushing per page is usually safer to avoid 
-        # reading across headers/footers weirdly, although it might break span-page sentences.
         if current_sentence_words:
             segments.append(create_segment(current_sentence_words, page_num))
 
@@ -61,15 +52,45 @@ def create_segment(words, page_num):
     # Join text
     text = " ".join(w[4] for w in words)
     
-    # Calculate union bbox
-    # x0 is min of all x0, y0 is min of all y0, etc.
-    x0 = min(w[0] for w in words)
-    y0 = min(w[1] for w in words)
-    x1 = max(w[2] for w in words)
-    y1 = max(w[3] for w in words)
+    # Calculate rects (one per line or just all words?)
+    # A simple approach for accurate highlighting is to return ALL word rects,
+    # or optimizing by merging adjacent rects on the same line.
+    
+    # Let's merge rects that are on the same line (roughly same y0/y1) and close in x.
+    # Words format: (x0, y0, x1, y1, "word", block_no, line_no, word_no)
+    
+    # Group by line_no (index 6) if available, or just use y-coordinates.
+    # PyMuPDF "words" includes line_no at index 6.
+    
+    lines = {}
+    for w in words:
+        line_key = (w[5], w[6]) # block_no, line_no
+        if line_key not in lines:
+            lines[line_key] = []
+        lines[line_key].append(w)
+        
+    rects = []
+    for line_words in lines.values():
+        # Create a union rect for this line
+        x0 = min(w[0] for w in line_words)
+        y0 = min(w[1] for w in line_words)
+        x1 = max(w[2] for w in line_words)
+        y1 = max(w[3] for w in line_words)
+        rects.append([x0, y0, x1, y1])
+
+    # Legacy union bbox (optional, for scrolling to view)
+    if rects:
+        union_x0 = min(r[0] for r in rects)
+        union_y0 = min(r[1] for r in rects)
+        union_x1 = max(r[2] for r in rects)
+        union_y1 = max(r[3] for r in rects)
+        bbox = [union_x0, union_y0, union_x1, union_y1]
+    else:
+        bbox = [0,0,0,0]
     
     return {
         "text": text,
         "page": page_num,
-        "bbox": [x0, y0, x1, y1]
+        "bbox": bbox, # Keep for backward compatibility/scrolling
+        "rects": rects # New field for precise highlighting
     }

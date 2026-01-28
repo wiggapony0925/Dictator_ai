@@ -3,6 +3,7 @@ export interface Segment {
     text: string;
     page: number;
     bbox: [number, number, number, number]; // [x0, y0, x1, y1] from PyMuPDF
+    rects: [number, number, number, number][]; // List of rects for multi-line support
 }
 
 export interface ConvertResponse {

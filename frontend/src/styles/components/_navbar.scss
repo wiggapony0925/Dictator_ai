@@ -1,0 +1,32 @@
+@use '../abstracts/variables' as *;
+@use '../abstracts/mixins' as *;
+
+.app-navbar {
+    background-color: $color-bg-panel;
+    border-bottom: 1px solid $color-border;
+    padding: $spacing-4;
+
+    &__content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: $spacing-3;
+
+        @include mobile {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    &__controls {
+        display: flex;
+        gap: $spacing-3;
+        align-items: center;
+
+        @include mobile {
+            width: 100%;
+            justify-content: space-between;
+            margin-top: $spacing-3;
+        }
+    }
+}

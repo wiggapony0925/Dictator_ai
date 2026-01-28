@@ -4,7 +4,10 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from services.pdf_handler import extract_sentences_with_coordinates
 from services.tts_handler import convert_text_to_speech
-import os
+from dotenv import load_dotenv
+import traceback
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
@@ -55,6 +58,9 @@ def convert():
 def speak():
     data = request.json
     text = data.get('text')
+    voice = data.get('voice', 'alloy')
+    speed = float(data.get('speed', 1.0))
+    model = data.get('model', 'tts-1')
     
     # Get API key from header or environment (Frontend should send it if user entered it)
     api_key = request.headers.get('X-OpenAI-Key') or os.environ.get('OPENAI_API_KEY')
@@ -66,12 +72,12 @@ def speak():
         
     try:
         # Generate audio for this specific segment
-        audio_filename = convert_text_to_speech(text, api_key)
+        audio_filename = convert_text_to_speech(text, api_key, voice, speed, model)
         audio_url = f"/static/audio/{audio_filename}"
         return jsonify({"audio_url": audio_url})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        traceback.print_exc()
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
-

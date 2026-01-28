@@ -1,0 +1,62 @@
+@use '../abstracts/variables' as *;
+@use '../abstracts/mixins' as *;
+
+.split-view {
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+    position: relative; // Needed for Panels
+
+    // Overriding Grid since we are using flex/panels now
+    // But keeping container logic
+
+    &__panel {
+        &--left {
+            background-color: var(--gray-3);
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        &--right {
+            height: 100%;
+            overflow-y: auto;
+            position: relative;
+            background-color: $color-bg-app; // Explicit bg
+        }
+    }
+}
+
+// Resize Handle Styles
+.resize-handle {
+    width: 10px;
+    background-color: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: col-resize;
+    transition: background-color 0.2s;
+
+    &:hover,
+    &[data-resize-handle-active] {
+        background-color: rgba($color-primary, 0.1);
+
+        .resize-handle__bar {
+            background-color: $color-primary;
+            height: 40px;
+        }
+    }
+
+    &__bar {
+        width: 4px;
+        height: 24px;
+        background-color: $color-border;
+        border-radius: 2px;
+        transition: all 0.2s;
+    }
+
+    // Hide on mobile if we stack
+    @include mobile {
+        display: none;
+    }
+}

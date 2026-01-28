@@ -12,12 +12,53 @@ export const useDictator = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Settings State
+    const [voice, setVoice] = useState('alloy');
+    const [speed, setSpeed] = useState(1.0);
+    const [modelStrategy, setModelStrategy] = useState<'auto' | 'quality' | 'standard' | 'mini'>('auto');
+
     const audioRef = useRef<HTMLAudioElement>(new Audio());
+
+    // Load Settings from LocalStorage
+    useEffect(() => {
+        const storedKey = localStorage.getItem('openai_api_key');
+        if (storedKey) setApiKey(storedKey);
+
+        const storedVoice = localStorage.getItem('dictator_voice');
+        if (storedVoice) setVoice(storedVoice);
+
+        const storedSpeed = localStorage.getItem('dictator_speed');
+        if (storedSpeed) setSpeed(parseFloat(storedSpeed));
+    }, []);
+
+    // Save Settings when changed
+    useEffect(() => {
+        if (apiKey) localStorage.setItem('openai_api_key', apiKey);
+    }, [apiKey]);
+
+    useEffect(() => {
+        localStorage.setItem('dictator_voice', voice);
+    }, [voice]);
+
+    useEffect(() => {
+        localStorage.setItem('dictator_speed', speed.toString());
+    }, [speed]);
+
 
     // Handle file selection
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            setFile(e.target.files[0]);
+            const selectedFile = e.target.files[0];
+            setFile(selectedFile);
+
+            // Immediate Preview
+            const objectUrl = URL.createObjectURL(selectedFile);
+            setPdfUrl(objectUrl);
+
+            // Reset state
+            setSegments([]);
+            setCurrentSegmentIndex(-1);
+            setError(null);
         }
     };
 
@@ -39,7 +80,13 @@ export const useDictator = () => {
 
             if (res.data.success) {
                 setSegments(res.data.segments);
-                setPdfUrl(res.data.pdf_url);
+                // We keep the local object URL preview, or use the one from backend if needed.
+                // But backend URL maps to /uploads which might be cleaner.
+                // However, objectURL is instant. Let's switch to server URL if returned to ensure consistency?
+                // Actually, let's keep objectURL for speed, unless backend processed it differently.
+                // But backend returns "pdf_url": f"/uploads/{filename}".
+                // Let's stick with objectURL for "instant" feel, or update it silently.
+                setPdfUrl(res.data.pdf_url); // Switch to served URL to ensure we are viewing what backend has
                 setCurrentSegmentIndex(-1);
             } else {
                 setError(res.data.error || 'Conversion unknown error');
@@ -51,6 +98,17 @@ export const useDictator = () => {
         }
     };
 
+    // Logic to determine model based on strategy and file size/segment count
+    const getModel = () => {
+        if (modelStrategy === 'quality') return 'tts-1-hd';
+        if (modelStrategy === 'standard') return 'tts-1';
+        if (modelStrategy === 'mini') return 'gpt-4o-mini-tts';
+
+        // Auto: "Super big pdf" -> Best model (tts-1-hd), "One page" -> Cheap/Fast (gpt-4o-mini-tts)
+        // Heuristic: > 30 segments = HD, else Mini.
+        return segments.length > 30 ? 'tts-1-hd' : 'gpt-4o-mini-tts';
+    };
+
     // Play a specific segment
     const playSegment = async (index: number) => {
         if (index < 0 || index >= segments.length) return;
@@ -59,17 +117,16 @@ export const useDictator = () => {
         setIsPlaying(true);
 
         const text = segments[index].text;
+        const model = getModel();
 
         try {
             const res = await axios.post('/speak',
-                { text },
+                { text, voice, speed, model },
                 { headers: { 'X-OpenAI-Key': apiKey } }
             );
 
             const audioUrl = res.data.audio_url;
             audioRef.current.src = audioUrl;
-
-            // Ensure we catch playback errors (e.g. mobile restriction without interaction)
             const playPromise = audioRef.current.play();
             if (playPromise !== undefined) {
                 playPromise.catch(err => {
@@ -105,6 +162,11 @@ export const useDictator = () => {
     useEffect(() => {
         const audio = audioRef.current;
 
+        // Update playback rate dynamically if audio is playing but source didn't change (HTML5 feature)
+        // Note: OpenAI speed is baked in, so this is just client-side fine tuning if needed, 
+        // but usually we rely on the baked file. 
+        // Let's rely on OpenAI baked speed for quality, as `audio.playbackRate` alters pitch sometimes.
+
         const handleEnded = () => {
             if (currentSegmentIndex < segments.length - 1) {
                 playSegment(currentSegmentIndex + 1);
@@ -117,60 +179,36 @@ export const useDictator = () => {
 
         // --- Media Session API Integration ---
         if ('mediaSession' in navigator && currentSegmentIndex !== -1 && segments.length > 0) {
-            // Set metadata
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: `Segment ${currentSegmentIndex + 1} of ${segments.length}`,
                 artist: 'Dictator AI',
                 album: file ? file.name : 'Document Reader',
-                // Placeholder artwork or app icon could go here
             });
 
-            // Action handlers
-            navigator.mediaSession.setActionHandler('play', () => {
-                // If paused, resume or play
-                if (audio.paused) {
-                    audio.play();
-                    setIsPlaying(true);
-                }
-            });
-            navigator.mediaSession.setActionHandler('pause', () => {
-                if (!audio.paused) {
-                    audio.pause();
-                    setIsPlaying(false);
-                }
-            });
-            navigator.mediaSession.setActionHandler('previoustrack', () => {
-                if (currentSegmentIndex > 0) {
-                    playSegment(currentSegmentIndex - 1);
-                }
-            });
-            navigator.mediaSession.setActionHandler('nexttrack', () => {
-                if (currentSegmentIndex < segments.length - 1) {
-                    playSegment(currentSegmentIndex + 1);
-                }
-            });
+            navigator.mediaSession.setActionHandler('play', () => { if (audio.paused) { audio.play(); setIsPlaying(true); } });
+            navigator.mediaSession.setActionHandler('pause', () => { if (!audio.paused) { audio.pause(); setIsPlaying(false); } });
+            navigator.mediaSession.setActionHandler('previoustrack', () => { if (currentSegmentIndex > 0) playSegment(currentSegmentIndex - 1); });
+            navigator.mediaSession.setActionHandler('nexttrack', () => { if (currentSegmentIndex < segments.length - 1) playSegment(currentSegmentIndex + 1); });
         }
 
         return () => {
             audio.removeEventListener('ended', handleEnded);
-            // Clean up handlers if needed, though they usually overwrite
         };
-    }, [currentSegmentIndex, segments, apiKey, file]);
+    }, [currentSegmentIndex, segments, apiKey, file]); // Re-bind when segment changes
 
     return {
-        apiKey,
-        setApiKey,
-        file,
-        handleFileChange,
+        apiKey, setApiKey,
+        file, handleFileChange,
         handleConvert,
-        segments,
-        pdfUrl,
+        segments, pdfUrl,
         currentSegmentIndex,
         isPlaying,
         isLoading,
-        error,
-        setError,
-        playSegment,
-        togglePlay
+        error, setError,
+        playSegment, togglePlay,
+        // Settings exports
+        voice, setVoice,
+        speed, setSpeed,
+        modelStrategy, setModelStrategy
     };
 };

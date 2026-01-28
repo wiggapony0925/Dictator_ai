@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Box, Flex, Text } from '@radix-ui/themes';
+import { Box, Text } from '@radix-ui/themes';
 import type { Segment } from '../types';
 
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -17,7 +17,7 @@ interface PDFHighlighterProps {
 export const PDFHighlighter: React.FC<PDFHighlighterProps> = ({ pdfUrl, currentSegment }) => {
     const [numPages, setNumPages] = useState<number>(0);
     const containerRef = useRef<HTMLDivElement>(null);
-    const [pageWidth, setPageWidth] = useState(600); // Default, will update on resize?
+    const [pageWidth] = useState(600); // Default, will update on resize?
 
     // For scrolling to the active page
     const activePageRef = useRef<HTMLDivElement>(null);
@@ -54,7 +54,7 @@ export const PDFHighlighter: React.FC<PDFHighlighterProps> = ({ pdfUrl, currentS
                 loading={<Text>Loading PDF...</Text>}
                 error={<Text color="red">Failed to load PDF</Text>}
             >
-                {Array.from(new Array(numPages), (el, index) => {
+                {Array.from(new Array(numPages), (_, index) => {
                     const pageNum = index + 1;
                     const isCurrentPage = currentSegment?.page === pageNum;
 
@@ -73,20 +73,24 @@ export const PDFHighlighter: React.FC<PDFHighlighterProps> = ({ pdfUrl, currentS
 
                             {/* Highlight Overlay */}
                             {isCurrentPage && currentSegment && (
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        left: `${currentSegment.bbox[0]}px`,
-                                        top: `${currentSegment.bbox[1]}px`,
-                                        width: `${currentSegment.bbox[2] - currentSegment.bbox[0]}px`,
-                                        height: `${currentSegment.bbox[3] - currentSegment.bbox[1]}px`,
-                                        backgroundColor: 'rgba(255, 255, 0, 0.4)',
-                                        border: '2px solid rgba(255, 255, 0, 0.8)',
-                                        borderRadius: '4px',
-                                        pointerEvents: 'none',
-                                        mixBlendMode: 'multiply' // Makes it look like a real highlighter
-                                    }}
-                                />
+                                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', mixBlendMode: 'multiply' }}>
+                                    {/* Render multiple rects if available, else fallback to bbox */}
+                                    {(currentSegment.rects && currentSegment.rects.length > 0 ? currentSegment.rects : [currentSegment.bbox]).map((box, i) => (
+                                        <div
+                                            key={i}
+                                            style={{
+                                                position: 'absolute',
+                                                left: `${box[0]}px`,
+                                                top: `${box[1]}px`,
+                                                width: `${box[2] - box[0]}px`,
+                                                height: `${box[3] - box[1]}px`,
+                                                backgroundColor: 'rgba(255, 255, 0, 0.4)',
+                                                border: '2px solid rgba(255, 255, 0, 0.8)',
+                                                borderRadius: '4px',
+                                            }}
+                                        />
+                                    ))}
+                                </div>
                             )}
                         </Box>
                     );
