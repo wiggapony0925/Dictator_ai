@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dictator AI - PDF to Audio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dictator AI</h1>
+            <p>Turn your PDFs into audio leveraging OpenAI's TTS.</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <form id="upload-form" action="/convert" method="post" enctype="multipart/form-data">
+                    <div class="api-key-section">
+                        <label for="api_key">OpenAI API Key (Optional if set in ENV)</label>
+                        <input type="password" id="api_key" name="api_key" placeholder="sk-...">
+                    </div>
+
+                    <div class="upload-area" id="drop-zone">
+                        <div class="icon">📄</div>
+                        <p>Drag & Drop your PDF here</p>
+                        <span>or</span>
+                        <input type="file" id="file" name="file" accept=".pdf" required hidden>
+                        <button type="button" class="btn secondary" onclick="document.getElementById('file').click()">Browse Files</button>
+                        <p id="filename" class="file-name"></p>
+                    </div>
+
+                    <div class="actions">
+                        <button type="submit" class="btn primary" id="convert-btn">Convert to Audio</button>
+                    </div>
+                </form>
+                
+                <div id="loading" class="hidden">
+                    <div class="spinner"></div>
+                    <p>Converting... This might take a moment.</p>
+                </div>
+
+                <div id="result" class="hidden">
+                    <h3>Your Audio is Ready!</h3>
+                    <audio id="audio-player" controls>
+                        Your browser does not support the audio element.
+                    </audio>
+                    <br>
+                    <a id="download-link" href="#" class="btn secondary" download>Download MP3</a>
+                </div>
+                
+                <div id="error" class="hidden error-message"></div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Powered by OpenAI & Flask</p>
+        </footer>
+    </div>
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file');
+        const filenameDisplay = document.getElementById('filename');
+        const form = document.getElementById('upload-form');
+        const loadingDiv = document.getElementById('loading');
+        const resultDiv = document.getElementById('result');
+        const errorDiv = document.getElementById('error');
+        const audioPlayer = document.getElementById('audio-player');
+        const downloadLink = document.getElementById('download-link');
+        const convertBtn = document.getElementById('convert-btn');
+
+        // Drag and drop handlers
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files;
+                updateFilename();
+            }
+        });
+
+        fileInput.addEventListener('change', updateFilename);
+
+        function updateFilename() {
+            if (fileInput.files.length > 0) {
+                filenameDisplay.textContent = fileInput.files[0].name;
+            } else {
+                filenameDisplay.textContent = '';
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            errorDiv.classList.add('hidden');
+            resultDiv.classList.add('hidden');
+            loadingDiv.classList.remove('hidden');
+            convertBtn.disabled = true;
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Something went wrong');
+                }
+
+                // Success
+                audioPlayer.src = data.audio_url;
+                downloadLink.href = data.audio_url;
+                resultDiv.classList.remove('hidden');
+            } catch (err) {
+                errorDiv.textContent = err.message;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                loadingDiv.classList.add('hidden');
+                convertBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
