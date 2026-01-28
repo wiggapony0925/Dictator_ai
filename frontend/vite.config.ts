@@ -1,4 +1,5 @@
-import { defineConfig } from 'vite'
+/// <reference types="vitest" />
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
@@ -11,5 +12,11 @@ export default defineConfig({
       '/uploads': 'http://127.0.0.1:5001',
       '/static': 'http://127.0.0.1:5001'
     }
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.ts',
+    css: true,
   }
 })
