@@ -12,9 +12,11 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 interface PDFHighlighterProps {
     pdfUrl: string;
     currentSegment: Segment | null;
+    segments: Segment[];
+    onSegmentClick: (index: number) => void;
 }
 
-export const PDFHighlighter: React.FC<PDFHighlighterProps> = ({ pdfUrl, currentSegment }) => {
+export const PDFHighlighter: React.FC<PDFHighlighterProps> = ({ pdfUrl, currentSegment, segments, onSegmentClick }) => {
     const [numPages, setNumPages] = useState<number>(0);
     const containerRef = useRef<HTMLDivElement>(null);
     const [pageWidth] = useState(600); // Default, will update on resize?
@@ -72,26 +74,45 @@ export const PDFHighlighter: React.FC<PDFHighlighterProps> = ({ pdfUrl, currentS
                             />
 
                             {/* Highlight Overlay */}
-                            {isCurrentPage && currentSegment && (
-                                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', mixBlendMode: 'multiply' }}>
-                                    {/* Render multiple rects if available, else fallback to bbox */}
-                                    {(currentSegment.rects && currentSegment.rects.length > 0 ? currentSegment.rects : [currentSegment.bbox]).map((box, i) => (
+                            {/* Interactive Highlights Overlay */}
+                            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', mixBlendMode: 'multiply' }}>
+                                {(segments || []).filter(s => s.page === pageNum).map((seg) => {
+                                    const isActive = currentSegment && currentSegment.id === seg.id;
+                                    const rects = seg.rects && seg.rects.length > 0 ? seg.rects : [seg.bbox];
+
+                                    return rects.map((box, i) => (
                                         <div
-                                            key={i}
+                                            key={`${seg.id}-${i}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                // Find original index
+                                                const originalIndex = segments.findIndex(s => s === seg);
+                                                if (originalIndex !== -1) onSegmentClick(originalIndex);
+                                            }}
                                             style={{
                                                 position: 'absolute',
                                                 left: `${box[0]}px`,
                                                 top: `${box[1]}px`,
                                                 width: `${box[2] - box[0]}px`,
                                                 height: `${box[3] - box[1]}px`,
-                                                backgroundColor: 'rgba(255, 255, 0, 0.4)',
-                                                border: '2px solid rgba(255, 255, 0, 0.8)',
+                                                backgroundColor: isActive ? 'rgba(255, 255, 0, 0.4)' : undefined, // Handled by CSS on hover now
+                                                border: isActive ? '2px solid rgba(255, 255, 0, 0.8)' : 'none',
                                                 borderRadius: '4px',
+                                                cursor: 'pointer',
+                                                pointerEvents: 'auto',
+                                                touchAction: 'manipulation', // Better for tapping
                                             }}
+                                            className={!isActive ? "pdf-hover-highlight" : ""}
                                         />
-                                    ))}
-                                </div>
-                            )}
+                                    ));
+                                })}
+                                <style>{`
+                                    .pdf-hover-highlight:hover {
+                                        background-color: rgba(255, 220, 0, 0.2);
+                                        border: 1px solid rgba(255, 220, 0, 0.5);
+                                    }
+                                `}</style>
+                            </div>
                         </Box>
                     );
                 })}

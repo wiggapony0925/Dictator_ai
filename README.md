@@ -64,11 +64,38 @@ npm run dev
 ```
 Open [http://localhost:5173](http://localhost:5173).
 
-## 📱 Mobile Usage
-1.  Ensure your computer and phone are on the same Wi-Fi.
-2.  Find your computer's local IP (e.g., `192.168.1.50`).
-3.  Open `http://192.168.1.50:5173` on your phone.
-4.  Upload a PDF and lock your screen to listen on the go!
+## 🐳 Deployment (Production)
+
+### Option 1: Docker (Recommended)
+This runs both Frontend and Backend in a single container.
+```bash
+# Build the image
+docker build -t dictator-ai .
+
+# Run container (Port 8080)
+docker run -p 8080:8080 -e OPENAI_API_KEY=sk-... dictator-ai
+```
+Visit http://localhost:8080
+
+### Option 2: Manual Build
+1. **Frontend**:
+   ```bash
+   cd frontend
+   npm run build
+   # Copy ./dist contents to backend/static or configure Nginx
+   ```
+2. **Backend**:
+   ```bash
+   cd backend
+   gunicorn -w 4 -b 0.0.0.0:5000 app:app
+   ```
+
+## 🌟 New Features (v2.0)
+- **Auto-Read**: Instant analysis on file drag-and-drop.
+- **Paragraph Logic**: Smart block segmentation for natural reading flow.
+- **Robust Error Handling**: Custom messages for 401, 429 (Rate Limits), and network issues.
+- **Instant Playback**: Zero-latency segment switching with request cancellation.
+- **Settings**: Voice/Speed changes apply live without reload.
 
 ## 🤝 Contributing
 Styles are located in `frontend/src/styles/`. Please follow the BEM naming convention:

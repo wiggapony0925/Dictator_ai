@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Heading, Text, Button, Box, Card, Flex } from '@radix-ui/themes';
 import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { useDictator } from './hooks/useDictator';
+import { LoadingOverlay } from './components/LoadingOverlay';
 import { Player } from './components/Player';
 import { Reader } from './components/Reader';
 import { SettingsDialog } from './components/SettingsDialog';
@@ -28,6 +29,7 @@ function App() {
     voice, setVoice,
     speed, setSpeed,
     modelStrategy, setModelStrategy,
+    hasStartedReading,
 
   } = useDictator();
 
@@ -74,8 +76,14 @@ function App() {
                 {file ? file.name : 'Select PDF'}
               </Button>
 
-              <Button type="submit" disabled={!file || isLoading}>
-                {isLoading ? 'Processing...' : 'Read'}
+              <Button
+                type="button"
+                disabled={!file || isLoading || hasStartedReading || segments.length === 0}
+                onClick={() => {
+                  if (segments.length > 0) playSegment(0);
+                }}
+              >
+                Start Reading
               </Button>
             </form>
 
@@ -102,6 +110,8 @@ function App() {
               <PDFHighlighter
                 pdfUrl={pdfUrl}
                 currentSegment={currentSegment}
+                segments={segments}
+                onSegmentClick={playSegment}
               />
             </Panel>
 
@@ -148,6 +158,7 @@ function App() {
       )}
 
       {/* Error Toast */}
+      {/* Error Toast */}
       {error && (
         <Box position="absolute" top="5" right="5" style={{ zIndex: 20 }}>
           <Card style={{ backgroundColor: 'var(--red-3)', color: 'var(--red-11)' }}>
@@ -158,6 +169,9 @@ function App() {
           </Card>
         </Box>
       )}
+
+      {/* Loading Overlay */}
+      {isLoading && <LoadingOverlay message="Analyzing PDF..." />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import type { Segment, ConvertResponse } from '../types';
+import { handleApiError } from '../utils/errorHandler';
 
 export const useDictator = () => {
     const [apiKey, setApiKey] = useState('');
@@ -12,12 +13,15 @@ export const useDictator = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const [hasStartedReading, setHasStartedReading] = useState(false);
+
     // Settings State
     const [voice, setVoice] = useState('alloy');
     const [speed, setSpeed] = useState(1.0);
     const [modelStrategy, setModelStrategy] = useState<'auto' | 'quality' | 'standard' | 'mini'>('auto');
 
     const audioRef = useRef<HTMLAudioElement>(new Audio());
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     // Load Settings from LocalStorage
     useEffect(() => {
@@ -45,7 +49,34 @@ export const useDictator = () => {
     }, [speed]);
 
 
-    // Handle file selection
+    // Convert Document Logic (Reusable)
+    const processFile = async (fileToProcess: File) => {
+        setIsLoading(true);
+        setError(null);
+
+        const formData = new FormData();
+        formData.append('file', fileToProcess);
+
+        try {
+            const res = await axios.post<ConvertResponse>('/convert', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+
+            if (res.data.success) {
+                setSegments(res.data.segments);
+                setPdfUrl(res.data.pdf_url);
+                setCurrentSegmentIndex(-1);
+            } else {
+                setError(res.data.error || 'Conversion unknown error');
+            }
+        } catch (err: any) {
+            setError(handleApiError(err));
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Handle file selection & Auto-Read
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const selectedFile = e.target.files[0];
@@ -58,43 +89,20 @@ export const useDictator = () => {
             // Reset state
             setSegments([]);
             setCurrentSegmentIndex(-1);
+            setHasStartedReading(false); // Reset button state
             setError(null);
+
+            // Auto-Read Trigger
+            processFile(selectedFile);
         }
     };
 
-    // Convert PDF
-    const handleConvert = async (e: React.FormEvent) => {
+    // Manual Trigger (keep for reliability/retry if needed)
+    const handleConvert = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!file) return;
-
-        setIsLoading(true);
-        setError(null);
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const res = await axios.post<ConvertResponse>('/convert', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
-
-            if (res.data.success) {
-                setSegments(res.data.segments);
-                // We keep the local object URL preview, or use the one from backend if needed.
-                // But backend URL maps to /uploads which might be cleaner.
-                // However, objectURL is instant. Let's switch to server URL if returned to ensure consistency?
-                // Actually, let's keep objectURL for speed, unless backend processed it differently.
-                // But backend returns "pdf_url": f"/uploads/{filename}".
-                // Let's stick with objectURL for "instant" feel, or update it silently.
-                setPdfUrl(res.data.pdf_url); // Switch to served URL to ensure we are viewing what backend has
-                setCurrentSegmentIndex(-1);
-            } else {
-                setError(res.data.error || 'Conversion unknown error');
-            }
-        } catch (err: any) {
-            setError(err.response?.data?.error || err.message);
-        } finally {
-            setIsLoading(false);
+        if (file) {
+            setHasStartedReading(false); // Reset if re-converting manually
+            processFile(file);
         }
     };
 
@@ -113,6 +121,20 @@ export const useDictator = () => {
     const playSegment = async (index: number) => {
         if (index < 0 || index >= segments.length) return;
 
+        // CANCEL PREVIOUS REQUEST
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // STOP PREVIOUS AUDIO INSTANTLY
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+
+        // CREATE NEW CONTROLLER
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        setHasStartedReading(true);
         setCurrentSegmentIndex(index);
         setIsPlaying(true);
 
@@ -122,7 +144,10 @@ export const useDictator = () => {
         try {
             const res = await axios.post('/speak',
                 { text, voice, speed, model },
-                { headers: { 'X-OpenAI-Key': apiKey } }
+                {
+                    headers: { 'X-OpenAI-Key': apiKey },
+                    signal: controller.signal
+                }
             );
 
             const audioUrl = res.data.audio_url;
@@ -130,14 +155,20 @@ export const useDictator = () => {
             const playPromise = audioRef.current.play();
             if (playPromise !== undefined) {
                 playPromise.catch(err => {
-                    console.error("Playback failed:", err);
-                    setIsPlaying(false);
+                    if (err.name !== 'AbortError') {
+                        console.error("Playback failed:", err);
+                        if (currentSegmentIndex === index) setIsPlaying(false);
+                    }
                 });
             }
         } catch (err: any) {
-            console.error("Audio error:", err);
-            setError(err.response?.data?.error || "Failed to play audio");
-            setIsPlaying(false);
+            if (axios.isCancel(err)) {
+                console.log('Request cancelled for segment:', index);
+            } else {
+                console.error("Audio error:", err);
+                setError(handleApiError(err));
+                setIsPlaying(false);
+            }
         }
     };
 
@@ -158,14 +189,31 @@ export const useDictator = () => {
         }
     };
 
+    // Instant Speed Update
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.playbackRate = speed;
+        }
+    }, [speed]);
+
+    // Instant Voice Update (Debounced)
+    useEffect(() => {
+        if (isPlaying && currentSegmentIndex !== -1) {
+            // Restart current segment with new voice
+            // Small timeout to debounce rapid changes
+            const timer = setTimeout(() => {
+                playSegment(currentSegmentIndex);
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [voice]);
+
     // Audio Event Listeners (Ended & Media Session)
     useEffect(() => {
         const audio = audioRef.current;
 
-        // Update playback rate dynamically if audio is playing but source didn't change (HTML5 feature)
-        // Note: OpenAI speed is baked in, so this is just client-side fine tuning if needed, 
-        // but usually we rely on the baked file. 
-        // Let's rely on OpenAI baked speed for quality, as `audio.playbackRate` alters pitch sometimes.
+        // Ensure speed is applied on load
+        audio.playbackRate = speed;
 
         const handleEnded = () => {
             if (currentSegmentIndex < segments.length - 1) {
@@ -176,6 +224,8 @@ export const useDictator = () => {
         };
 
         audio.addEventListener('ended', handleEnded);
+        // Re-apply speed when audio starts playing (sometimes resets)
+        audio.addEventListener('play', () => { audio.playbackRate = speed; });
 
         // --- Media Session API Integration ---
         if ('mediaSession' in navigator && currentSegmentIndex !== -1 && segments.length > 0) {
@@ -203,6 +253,7 @@ export const useDictator = () => {
         segments, pdfUrl,
         currentSegmentIndex,
         isPlaying,
+        hasStartedReading,
         isLoading,
         error, setError,
         playSegment, togglePlay,
