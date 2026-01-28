@@ -1,19 +1,18 @@
 import os
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from services.pdf_handler import extract_text_from_pdf, split_into_sentences
 from services.tts_handler import convert_text_to_speech
+import os
 
 app = Flask(__name__)
+CORS(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max limit
 
 # Ensure upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-@app.route('/')
-def index():
-    return render_template('index.html')
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):

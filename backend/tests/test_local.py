@@ -1,6 +1,7 @@
 import unittest
 import os
 import sys
+import json
 from unittest.mock import patch, MagicMock
 from io import BytesIO
 from reportlab.pdfgen import canvas
@@ -30,7 +31,6 @@ class TestDictatorAI(unittest.TestCase):
 
     def test_pdf_extraction_logic(self):
         """Test the logic in pdf_handler directly"""
-        # Save dummy PDF to temp file
         temp_pdf = "test_dummy.pdf"
         try:
             with open(temp_pdf, "wb") as f:
@@ -43,16 +43,13 @@ class TestDictatorAI(unittest.TestCase):
             if os.path.exists(temp_pdf):
                 os.remove(temp_pdf)
 
-    @patch('app.convert_text_to_speech')
     @patch('app.extract_text_from_pdf')
-    def test_convert_route(self, mock_extract, mock_tts):
-        """Test the Flask route with mocked services"""
-        mock_extract.return_value = "Mocked Text"
-        mock_tts.return_value = "mocked_audio.mp3"
+    def test_convert_route(self, mock_extract):
+        """Test the /convert route returns segments"""
+        mock_extract.return_value = "Sentence one. Sentence two."
         
         data = {
-            'file': (self.pdf_content, 'test.pdf'),
-            'api_key': 'sk-fake-key'
+            'file': (self.pdf_content, 'test.pdf')
         }
         
         response = self.app.post('/convert', data=data, content_type='multipart/form-data')
@@ -60,18 +57,45 @@ class TestDictatorAI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         json_data = response.get_json()
         self.assertTrue(json_data['success'])
-        self.assertIn("mocked_audio.mp3", json_data['audio_url'])
+        self.assertIn('pdf_url', json_data)
+        self.assertIn('segments', json_data)
+        self.assertEqual(len(json_data['segments']), 2)
+        self.assertEqual(json_data['segments'][0]['text'], "Sentence one.")
 
-    def test_missing_api_key(self):
-        """Test error when API key is missing"""
+    @patch('app.convert_text_to_speech')
+    def test_speak_route(self, mock_tts):
+        """Test the /speak route returns audio url"""
+        mock_tts.return_value = "test_audio.mp3"
+        
         data = {
-            'file': (self.pdf_content, 'test.pdf')
+            'text': 'Hello world'
         }
-        # Ensure env var is not set for this test
+        
+        # Mock headers
+        headers = {'X-OpenAI-Key': 'sk-test-key'}
+        
+        response = self.app.post('/speak', 
+                               data=json.dumps(data), 
+                               content_type='application/json',
+                               headers=headers)
+        
+        self.assertEqual(response.status_code, 200)
+        json_data = response.get_json()
+        self.assertEqual(json_data['audio_url'], "/static/audio/test_audio.mp3")
+
+    def test_speak_missing_api_key(self):
+        """Test /speak error when API key is missing"""
+        data = {
+            'text': 'Hello world'
+        }
+        # Ensure env var is not set and no header is sent
         with patch.dict(os.environ, {}, clear=True):
-            response = self.app.post('/convert', data=data, content_type='multipart/form-data')
-            self.assertEqual(response.status_code, 400)
-            self.assertIn("API Key is required", response.get_json()['error'])
+            response = self.app.post('/speak', 
+                                   data=json.dumps(data), 
+                                   content_type='application/json')
+            
+            self.assertEqual(response.status_code, 401)
+            self.assertIn("API Key missing", response.get_json()['error'])
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,50 +1,58 @@
 # Dictator AI 🎙️
 
-A simple yet effective tool that reads your PDF files out loud using OpenAI's high-quality Text-to-Speech (TTS) API.
+An advanced "School Tool" that converts PDF textbooks into audio, featuring a split-screen reader, real-time highlighting, and a sleek floating player with instant scrubbing.
 
-## Features
-- 📄  **Drag & Drop Interface**: Easily upload your PDFs.
-- 🗣️  **Premium AI Voice**: Uses OpenAI's `tts-1` model for natural-sounding audio.
-- 🔒  **Secure**: Your API key is used only for the conversion and not stored permanently.
-- 🎧  **Instant Playback**: Listen immediately or download the MP3.
+## Architecture
+The project is split into two distinct parts:
+- **`backend/`**: Python Flask API (Port 5001) handling PDF text extraction and TTS.
+- **`frontend/`**: React + TypeScript + Vite app (Port 5173) for the user interface.
 
-## 🚀 Getting Started
+## Prerequisites
+- Node.js (v18+) & npm
+- Python 3.9+
+- OpenAI API Key
 
-### Prerequisites
-- Python 3.10 or higher
-- An OpenAI API Key
+## 🚀 Quick Start (Development)
 
-### 1. Get an OpenAI API Key
-To use this application, you need an API key from OpenAI.
-1. Go to [platform.openai.com](https://platform.openai.com/signup) and sign up or log in.
-2. Navigate to the **API keys** section in the Dashboard.
-3. Click **"Create new secret key"**.
-4. Give it a name (e.g., "Dictator AI") and click **Create**.
-5. **Copy the key immediately** (starts with `sk-...`). You won't be able to see it again!
-   > *Note: OpenAI is a paid service. You may need to add a small amount of credit (e.g., $5) to your account to use the API.*
-
-### 2. Install Dependencies
-Open your terminal/command prompt in the project folder and run:
+### 1. Start the Backend
 ```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
+
+# Run the API
+export OPENAI_API_KEY=your_key_here
+flask run --port 5001
 ```
 
-### 3. Run the Application
-Start the server with:
+### 2. Start the Frontend
+Open a new terminal:
 ```bash
-python app.py
+cd frontend
+npm install
+npm run dev
+```
+Visit `http://localhost:5173` to use the app.
+
+## 🧪 Testing
+The project includes a test suite for the backend API.
+
+```bash
+cd backend
+python3 -m pytest tests/test_local.py
 ```
 
-### 4. Use the App
-1. Open your browser and go to: `http://localhost:5000`
-2. **Enter your API Key** in the designated field.
-   * *Tip: You can also set it as an environment variable `export OPENAI_API_KEY=your-key` before running the app to skip this step.*
-3. **Upload your PDF**.
-4. Click **Convert** and wait for the magic! ✨
+## 📦 Deployment (Production)
 
-## 🧹 Housekeeping
-- **Audio Files**: Generated audio files are saved in `static/audio/`. You can manually clear this folder if it gets too full.
-- **Uploads**: Uploaded PDFs are stored in `uploads/` temporarily.
+### Frontend Build
+To create an optimized production build:
+```bash
+cd frontend
+npm run build
+```
+The output will be in `frontend/dist`. You can deploy this folder to Netlify, Vercel, or serve it statically.
 
-## License
-[MIT](LICENSE)
+### Backend Deployment
+Deploy the `backend/` folder to any Python hosting service (Heroku, Render, AWS). 
+Ensure you set the `OPENAI_API_KEY` environment variable in your production environment.
