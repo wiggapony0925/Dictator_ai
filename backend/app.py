@@ -62,8 +62,8 @@ def speak():
     speed = float(data.get('speed', 1.0))
     model = data.get('model', 'tts-1')
     
-    # Get API key from header or environment (Frontend should send it if user entered it)
-    api_key = request.headers.get('X-OpenAI-Key') or os.environ.get('OPENAI_API_KEY')
+    # Get API key from header (User must provide it in Settings)
+    api_key = request.headers.get('X-OpenAI-Key')
     
     if not text:
         return jsonify({"error": "No text provided"}), 400

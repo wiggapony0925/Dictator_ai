@@ -74,11 +74,10 @@ docker build -t dictator-ai .
 ```
 
 ### 2. Run the Container
-You must provide your OpenAI API Key.
 ```bash
-docker run -p 8080:5001 -e OPENAI_API_KEY=sk-your-key-here dictator-ai
+docker run -p 8080:5001 dictator-ai
 ```
-Now visit **http://localhost:8080** in your browser.
+Now visit **http://localhost:8080**. Users will be prompted to enter their OpenAI API Key in the Settings menu.
 
 ### Option 2: Manual Run
 1. **Frontend**:
