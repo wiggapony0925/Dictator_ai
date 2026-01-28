@@ -1,139 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dictator AI - PDF to Audio</title>
+    <title>Dictator AI - Reader Mode</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@300;400;700&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
-    <div class="container">
-        <header>
-            <h1>Dictator AI</h1>
-            <p>Turn your PDFs into audio leveraging OpenAI's TTS.</p>
+    <div class="app-container">
+        <!-- Sidebar / Header Area -->
+        <header class="sidebar">
+            <div class="brand">
+                <h1>Dictator AI</h1>
+                <p>Interactive PDF Reader</p>
+            </div>
+
+            <div class="controls">
+                <form id="upload-form">
+                    <div class="api-input-group">
+                        <label for="api_key">OpenAI Key</label>
+                        <input type="password" id="api_key" placeholder="sk-..." value="">
+                    </div>
+
+                    <div class="file-input-wrapper">
+                        <input type="file" id="file" name="file" accept=".pdf" required hidden>
+                        <button type="button" class="btn secondary"
+                            onclick="document.getElementById('file').click()">Select PDF</button>
+                        <span id="filename">No file selected</span>
+                    </div>
+
+                    <button type="submit" class="btn primary" id="convert-btn">Load & Read</button>
+                </form>
+            </div>
+
+            <!-- Floating Player -->
+            <div class="floating-player hidden" id="player-bar">
+                <div class="player-content">
+                    <button id="play-pause-btn" class="play-btn">
+                        <span id="play-icon">▶</span>
+                        <span id="pause-icon" class="hidden">⏸</span>
+                    </button>
+
+                    <div class="slider-container">
+                        <span id="current-time">0:00</span>
+                        <input type="range" id="seek-slider" min="0" value="0" step="1">
+                        <span id="total-time">--:--</span>
+                    </div>
+                </div>
+            </div>
         </header>
 
-        <main>
-            <div class="card">
-                <form id="upload-form" action="/convert" method="post" enctype="multipart/form-data">
-                    <div class="api-key-section">
-                        <label for="api_key">OpenAI API Key (Optional if set in ENV)</label>
-                        <input type="password" id="api_key" name="api_key" placeholder="sk-...">
-                    </div>
+        <!-- Main Content Area: Split Screen -->
+        <main class="split-view hidden" id="main-view">
+            <!-- Left: PDF Viewer -->
+            <div class="panel pdf-panel">
+                <h2 class="panel-title">Original Document</h2>
+                <iframe id="pdf-frame" src="" type="application/pdf"></iframe>
+            </div>
 
-                    <div class="upload-area" id="drop-zone">
-                        <div class="icon">📄</div>
-                        <p>Drag & Drop your PDF here</p>
-                        <span>or</span>
-                        <input type="file" id="file" name="file" accept=".pdf" required hidden>
-                        <button type="button" class="btn secondary" onclick="document.getElementById('file').click()">Browse Files</button>
-                        <p id="filename" class="file-name"></p>
-                    </div>
-
-                    <div class="actions">
-                        <button type="submit" class="btn primary" id="convert-btn">Convert to Audio</button>
-                    </div>
-                </form>
-                
-                <div id="loading" class="hidden">
-                    <div class="spinner"></div>
-                    <p>Converting... This might take a moment.</p>
+            <!-- Right: Reader Mode -->
+            <div class="panel reader-panel">
+                <h2 class="panel-title">Reader View</h2>
+                <div id="segments-container" class="segments-list">
+                    <!-- Segments will be injected here -->
+                    <div class="placeholder">Upload a PDF to start reading...</div>
                 </div>
-
-                <div id="result" class="hidden">
-                    <h3>Your Audio is Ready!</h3>
-                    <audio id="audio-player" controls>
-                        Your browser does not support the audio element.
-                    </audio>
-                    <br>
-                    <a id="download-link" href="#" class="btn secondary" download>Download MP3</a>
-                </div>
-                
-                <div id="error" class="hidden error-message"></div>
             </div>
         </main>
-        
-        <footer>
-            <p>Powered by OpenAI & Flask</p>
-        </footer>
+
+        <!-- Loading Overlay -->
+        <div id="loading" class="overlay hidden">
+            <div class="spinner"></div>
+            <p>Processing PDF...</p>
+        </div>
+
+        <!-- Error Overlay -->
+        <div id="error" class="overlay hidden">
+            <div class="error-box">
+                <h3 id="error-title">Error</h3>
+                <p id="error-msg"></p>
+                <button onclick="document.getElementById('error').classList.add('hidden')"
+                    class="btn secondary">Close</button>
+            </div>
+        </div>
     </div>
-    <script>
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file');
-        const filenameDisplay = document.getElementById('filename');
-        const form = document.getElementById('upload-form');
-        const loadingDiv = document.getElementById('loading');
-        const resultDiv = document.getElementById('result');
-        const errorDiv = document.getElementById('error');
-        const audioPlayer = document.getElementById('audio-player');
-        const downloadLink = document.getElementById('download-link');
-        const convertBtn = document.getElementById('convert-btn');
 
-        // Drag and drop handlers
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
+    <!-- Audio Element (for playback) -->
+    <audio id="audio-player" hidden></audio>
 
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length) {
-                fileInput.files = files;
-                updateFilename();
-            }
-        });
-
-        fileInput.addEventListener('change', updateFilename);
-
-        function updateFilename() {
-            if (fileInput.files.length > 0) {
-                filenameDisplay.textContent = fileInput.files[0].name;
-            } else {
-                filenameDisplay.textContent = '';
-            }
-        }
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            errorDiv.classList.add('hidden');
-            resultDiv.classList.add('hidden');
-            loadingDiv.classList.remove('hidden');
-            convertBtn.disabled = true;
-
-            const formData = new FormData(form);
-
-            try {
-                const response = await fetch('/convert', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Something went wrong');
-                }
-
-                // Success
-                audioPlayer.src = data.audio_url;
-                downloadLink.href = data.audio_url;
-                resultDiv.classList.remove('hidden');
-            } catch (err) {
-                errorDiv.textContent = err.message;
-                errorDiv.classList.remove('hidden');
-            } finally {
-                loadingDiv.classList.add('hidden');
-                convertBtn.disabled = false;
-            }
-        });
-    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
+
 </html>

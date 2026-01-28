@@ -61,3 +61,4 @@ static/audio/
 
 # MacOS
 .DS_Store
+api_key
