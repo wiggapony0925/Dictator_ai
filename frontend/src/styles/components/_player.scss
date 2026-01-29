@@ -2,14 +2,14 @@
 @use '../abstracts/mixins' as *;
 
 .audio-player-wrapper {
-    position: absolute;
-    bottom: 30px;
+    position: fixed; // Fixed maintains position on screen regardless of scroll
+    bottom: 120px !important; // Floating significantly up ("middle-ish but down")
     left: 0;
     right: 0;
     pointer-events: none;
     display: flex;
     justify-content: center;
-    z-index: 100;
+    z-index: 9990; // Very High z-index to ensure it is ALWAYs on top of content (PDF, Modals, etc)
 
     // Enable pointer events for the player interaction
     >* {
@@ -17,7 +17,7 @@
     }
 
     @include mobile {
-        bottom: 90px;
+        bottom: 140px !important; // Higher on mobile
         width: 100%;
 
         .player-card {
@@ -28,7 +28,7 @@
 }
 
 .player-card {
-    width: 450px;
+    width: 380px; // More compact desktop width
     // backdrop-filter removed
     background-color: #ffffff; // Strictly solid white for max opacity
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); // Stronger shadow for depth

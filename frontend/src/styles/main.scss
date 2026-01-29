@@ -1,6 +1,9 @@
-@use 'variables' as *;
-@use 'mixins' as *;
+@use 'abstracts/variables' as *;
+@use 'abstracts/mixins' as *;
 
+// Components
+@use 'components/player';
+@use 'components/slider';
 // Global Resets already in index.css (Radix), but let's reinforce specific app needs here
 
 .app-shell {
@@ -148,17 +151,4 @@
 }
 
 // --- Audio Player Wrapper ---
-.audio-player-wrapper {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 600px;
-    z-index: $z-index-navbar;
-    /* Above PDF but below modal */
-
-    @include mobile {
-        bottom: $bottom-sheet-height + 20px;
-    }
-}
+// Moved to components/_player.scss to avoid duplicates

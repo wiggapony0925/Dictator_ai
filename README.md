@@ -107,8 +107,8 @@ The application is containerized with a highly optimized **Multi-Stage Build**.
 The project follows a strict **SCSS BEM** methodology for clean, maintainable styles.
 
 *   `frontend/src/styles/main.scss`: Entry point.
-*   `frontend/src/styles/_variables.scss`: Design tokens (Colors, Spacing).
-*   `frontend/src/styles/_mixins.scss`: Responsive helpers.
+*   `frontend/src/styles/abstracts/_variables.scss`: Design tokens (Colors, Spacing).
+*   `frontend/src/styles/abstracts/_mixins.scss`: Responsive helpers.
 
 **Example:**
 ```scss

@@ -28,11 +28,11 @@ class AudioMock {
     playbackRate: number;
     currentTime: number;
     paused: boolean;
-    load: any;
-    play: any;
-    pause: any;
-    addEventListener: any;
-    removeEventListener: any;
+    load: () => void;
+    play: () => Promise<void>;
+    pause: () => void;
+    addEventListener: (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => void;
+    removeEventListener: (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions) => void;
 
     constructor() {
         this.src = '';

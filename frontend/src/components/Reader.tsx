@@ -30,7 +30,7 @@ export const Reader: React.FC<ReaderProps> = ({
     // Early return handled in render now to support loading state
 
     return (
-        <Box p="4">
+        <Box p="4" style={{ height: '100%', overflowY: 'auto' }}>
             {segments.length > 0 ? (
                 segments.map((seg, index) => {
                     const isActive = index === currentSegmentIndex;

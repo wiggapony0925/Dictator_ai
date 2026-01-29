@@ -19,3 +19,17 @@ $spacing-6: var(--space-6);
 $radius-3: var(--radius-3);
 $radius-4: var(--radius-4);
 $radius-5: var(--radius-5);
+
+// Layout
+$navbar-height: 64px;
+$bottom-sheet-height: 50vh; // Initial height for mobile sheet
+
+// Z-Indices
+$z-index-pdf: 10;
+$z-index-player: 20;
+$z-index-bottom-sheet: 30;
+$z-index-navbar: 40;
+$z-index-modal: 100;
+
+// Colors (Additional)
+$color-bg-surface: var(--gray-1);

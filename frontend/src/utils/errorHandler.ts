@@ -1,13 +1,13 @@
 import axios from 'axios';
 
-export const handleApiError = (error: any): string => {
+export const handleApiError = (error: unknown): string => {
     if (axios.isCancel(error)) {
         return ''; // Silent failure for cancellations
     }
 
-    if (error.response) {
-        const status = error.response.status;
-        const serverMsg = error.response.data?.error;
+    if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const serverMsg = error.response?.data?.error;
 
         // If backend provided a specific message, always prioritize it
         if (serverMsg) {
@@ -28,13 +28,12 @@ export const handleApiError = (error: any): string => {
             case 504:
                 return "Connection Error: Unable to reach OpenAI services. Please check your internet or API status.";
             default:
-                return `An error occurred (${status}). Please try again.`;
+                return `An error occurred (${status || 'unknown'}). Please try again.`;
         }
-    } else if (error.request) {
-        // Request made but no response received
-        return "Network Error: No response received. Please check your internet connection.";
-    } else {
+    } else if (error instanceof Error) {
         // Something happened setting up the request
         return error.message || "An unexpected error occurred.";
     }
+
+    return "An unexpected error occurred.";
 };

@@ -5,10 +5,10 @@ import { useDictator } from './hooks/useDictator';
 import { LoadingOverlay } from './components/LoadingOverlay';
 import { Player } from './components/Player';
 import { Reader } from './components/Reader';
-import { SettingsSheet } from './components/SettingsSheet';
+import { SettingsDialog } from './components/SettingsSheet';
 import { PDFHighlighter } from './components/PDFHighlighter';
 import { Dropzone } from './components/Dropzone';
-import { Upload, Trash2 } from 'lucide-react';
+import { Upload, Trash2, FileText, File } from 'lucide-react';
 import './styles/main.scss';
 
 function App() {
@@ -43,6 +43,9 @@ function App() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Mobile View Toggle State
+  const [mobileView, setMobileView] = useState<'pdf' | 'reader'>('pdf');
 
   const currentSegment = currentSegmentIndex >= 0 && currentSegmentIndex < segments.length
     ? segments[currentSegmentIndex]
@@ -111,7 +114,7 @@ function App() {
             </form>
 
             {/* Navbar Controls */}
-            <SettingsSheet
+            <SettingsDialog
               apiKey={apiKey}
               setApiKey={setApiKey}
               voice={voice}
@@ -121,6 +124,19 @@ function App() {
               modelStrategy={modelStrategy}
               setModelStrategy={setModelStrategy}
             />
+
+            {/* Mobile View Toggle */}
+            {isMobile && pdfUrl && (
+              <Button
+                variant="soft"
+                onClick={() => setMobileView(v => v === 'pdf' ? 'reader' : 'pdf')}
+                style={{ padding: '0 8px' }}
+              >
+                {mobileView === 'pdf' ? <FileText size={16} /> : <File size={16} />}
+                {mobileView === 'pdf' ? 'Text' : 'PDF'}
+              </Button>
+            )}
+
           </Flex>
         </div>
       </div>
@@ -129,10 +145,11 @@ function App() {
       <div className="split-view">
         {pdfUrl ? (
           isMobile ? (
-            /* Mobile Layout: Stacked Layers using BEM */
-            <div className="mobile-layout">
-              {/* Layer 1: PDF (Full Screen Background) */}
-              <div className="mobile-layout__pdf-layer">
+            /* Mobile Layout: Toggle View */
+            /* Mobile Layout: Toggle View */
+            <div style={{ height: '100%', overflow: 'hidden', position: 'relative' }}>
+              {/* PDF Layer - Always mounted, hidden via CSS */}
+              <div style={{ height: '100%', display: mobileView === 'pdf' ? 'block' : 'none' }}>
                 <PDFHighlighter
                   pdfUrl={pdfUrl}
                   currentSegment={currentSegment}
@@ -141,52 +158,49 @@ function App() {
                 />
               </div>
 
-              {/* Layer 2: Reader (Bottom Sheet) */}
-              <div className="mobile-layout__bottom-sheet">
-                {/* Handle */}
-                <div className="mobile-layout__bottom-sheet-handle-area">
-                  <div className="mobile-layout__bottom-sheet-handle-bar"></div>
-                </div>
-
-                <div className="mobile-layout__bottom-sheet-content">
-                  <Reader
-                    pdfUrl={pdfUrl}
-                    segments={segments}
-                    currentSegmentIndex={currentSegmentIndex}
-                    onSegmentClick={playSegment}
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* Desktop Layout: Resizable Horizontal Split */
-            <PanelGroup orientation="horizontal" style={{ height: '100%' }}>
-              {/* Left: PDF */}
-              <Panel defaultSize={50} minSize={20} className="split-view__panel--left">
-                <PDFHighlighter
-                  pdfUrl={pdfUrl}
-                  currentSegment={currentSegment}
-                  segments={segments}
-                  onSegmentClick={playSegment}
-                />
-              </Panel>
-
-              <PanelResizeHandle className="resize-handle">
-                <div className="resize-handle__bar" />
-              </PanelResizeHandle>
-
-              {/* Right: Reader */}
-              <Panel defaultSize={50} minSize={20} className="split-view__panel--right">
+              {/* Reader Layer - Always mounted, hidden via CSS */}
+              <div style={{ height: '100%', display: mobileView === 'reader' ? 'block' : 'none' }}>
                 <Reader
                   pdfUrl={pdfUrl}
                   segments={segments}
                   currentSegmentIndex={currentSegmentIndex}
                   onSegmentClick={playSegment}
                 />
-              </Panel>
-            </PanelGroup>
+              </div>
+            </div>
+          ) : (
+            /* Desktop Layout: Resizable Horizontal Split */
+            <>
+              <PanelGroup orientation="horizontal" style={{ height: '100%' }}>
+                {/* Left: PDF */}
+                <Panel defaultSize={50} minSize={20} className="split-view__panel--left">
+                  <PDFHighlighter
+                    pdfUrl={pdfUrl}
+                    currentSegment={currentSegment}
+                    segments={segments}
+                    onSegmentClick={playSegment}
+                  />
+                </Panel>
+
+                <PanelResizeHandle className="resize-handle">
+                  <div className="resize-handle__bar" />
+                </PanelResizeHandle>
+
+                {/* Right: Reader */}
+                <Panel defaultSize={50} minSize={20} className="split-view__panel--right">
+                  <Reader
+                    pdfUrl={pdfUrl}
+                    segments={segments}
+                    currentSegmentIndex={currentSegmentIndex}
+                    onSegmentClick={playSegment}
+                  />
+                </Panel>
+              </PanelGroup>
+
+            </>
           )
         ) : (
+
           <div style={{ height: '100%', padding: '2rem' }}>
             <Dropzone
               onFileSelect={(f) => {
@@ -205,7 +219,7 @@ function App() {
         )}
       </div>
 
-      {/* Floating Player */}
+      {/* Floating Player - Restored to root so it shows on Mobile too */}
       {segments.length > 0 && (
         <div className="audio-player-wrapper">
           <Player
@@ -217,6 +231,7 @@ function App() {
           />
         </div>
       )}
+
 
       {/* Error Toast */}
       {/* Error Toast */}

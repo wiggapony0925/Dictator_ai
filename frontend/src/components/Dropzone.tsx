@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, type FileRejection, type FileError } from 'react-dropzone';
 import { Box, Flex, Text, Button } from '@radix-ui/themes';
 import { UploadCloud } from 'lucide-react';
 
@@ -10,7 +10,7 @@ interface DropzoneProps {
 }
 
 export const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, onError, isLoading }) => {
-    const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
+    const onDrop = useCallback((acceptedFiles: File[], fileRejections: FileRejection[]) => {
         // Handle Accepted Files
         if (acceptedFiles.length > 0) {
             onFileSelect(acceptedFiles[0]);
@@ -19,7 +19,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, onError, isLoa
         // Handle Rejected Files (Wrong Type)
         if (fileRejections.length > 0) {
             const rejection = fileRejections[0];
-            if (rejection.errors.some((e: any) => e.code === 'file-invalid-type')) {
+            if (rejection.errors.some((e: FileError) => e.code === 'file-invalid-type')) {
                 onError("Sorry, we only accept PDF files. 📄");
             } else {
                 onError("File upload failed. Please try again.");

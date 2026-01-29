@@ -17,24 +17,24 @@ vi.mock('axios', () => {
 
 describe('handleApiError implementation', () => {
     it('returns empty string for cancelled requests', () => {
-        (axios.isCancel as any).mockReturnValue(true);
+        vi.mocked(axios.isCancel).mockReturnValue(true);
         expect(handleApiError({})).toBe('');
     });
 
     it('returns correct message for 400', () => {
-        (axios.isCancel as any).mockReturnValue(false);
+        vi.mocked(axios.isCancel).mockReturnValue(false);
         const error = { response: { status: 400, data: { error: 'Custom' } } };
         expect(handleApiError(error)).toBe('Custom');
     });
 
     it('returns default 401 message', () => {
-        (axios.isCancel as any).mockReturnValue(false);
+        vi.mocked(axios.isCancel).mockReturnValue(false);
         const error = { response: { status: 401 } };
         expect(handleApiError(error)).toContain('Unauthorized');
     });
 
     it('returns network error when no response', () => {
-        (axios.isCancel as any).mockReturnValue(false);
+        vi.mocked(axios.isCancel).mockReturnValue(false);
         const error = { request: {} };
         expect(handleApiError(error)).toContain('Network Error');
     });

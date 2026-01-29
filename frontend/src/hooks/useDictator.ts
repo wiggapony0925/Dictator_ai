@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import type { Segment, ConvertResponse } from '../types';
 import { handleApiError } from '../utils/errorHandler';
@@ -69,7 +69,7 @@ export const useDictator = () => {
             } else {
                 setError(res.data.error || 'Conversion unknown error');
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             setError(handleApiError(err));
         } finally {
             setIsLoading(false);
@@ -107,7 +107,7 @@ export const useDictator = () => {
     };
 
     // Logic to determine model based on strategy and file size/segment count
-    const getModel = () => {
+    const getModel = useCallback(() => {
         if (modelStrategy === 'quality') return 'tts-1-hd';
         if (modelStrategy === 'standard') return 'tts-1';
         if (modelStrategy === 'mini') return 'gpt-4o-mini-tts';
@@ -115,10 +115,10 @@ export const useDictator = () => {
         // Auto: "Super big pdf" -> Best model (tts-1-hd), "One page" -> Cheap/Fast (gpt-4o-mini-tts)
         // Heuristic: > 30 segments = HD, else Mini.
         return segments.length > 30 ? 'tts-1-hd' : 'gpt-4o-mini-tts';
-    };
+    }, [modelStrategy, segments]);
 
     // Play a specific segment
-    const playSegment = async (index: number) => {
+    const playSegment = useCallback(async (index: number) => {
         if (index < 0 || index >= segments.length) return;
 
         // CANCEL PREVIOUS REQUEST
@@ -162,17 +162,17 @@ export const useDictator = () => {
 
             const playPromise = audioRef.current.play();
             if (playPromise !== undefined) {
-                playPromise.catch(err => {
+                playPromise.catch((err: unknown) => {
                     audioRef.current.removeEventListener('error', errorHandler); // Cleanup
-                    if (err.name !== 'AbortError') {
+                    // Ignore AbortError and known cancellation
+                    if (err instanceof Error && err.name !== 'AbortError') {
                         console.error("Playback failed:", err);
                         if (currentSegmentIndex === index) setIsPlaying(false);
-                        // Don't overwrite specific error if 404 handler fired
                         if (!error) setError("Playback Error: Unable to play audio.");
                     }
                 });
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (axios.isCancel(err)) {
                 console.log('Request cancelled for segment:', index);
             } else {
@@ -181,7 +181,8 @@ export const useDictator = () => {
                 setIsPlaying(false);
             }
         }
-    };
+    }, [segments, apiKey, voice, speed, getModel, currentSegmentIndex, error]);
+
 
     // Toggle Play/Pause
     const togglePlay = () => {
@@ -217,7 +218,7 @@ export const useDictator = () => {
             }, 200); // reduced from 500 for snappier feel
             return () => clearTimeout(timer);
         }
-    }, [voice]);
+    }, [voice, isPlaying, currentSegmentIndex, playSegment]);
 
     // Audio Event Listeners (Ended & Media Session)
     useEffect(() => {
@@ -255,7 +256,7 @@ export const useDictator = () => {
         return () => {
             audio.removeEventListener('ended', handleEnded);
         };
-    }, [currentSegmentIndex, segments, apiKey, file]); // Re-bind when segment changes
+    }, [currentSegmentIndex, segments, apiKey, file, playSegment, speed]); // Re-bind when segment changes
 
     // Reset State (Remove PDF)
     const resetState = () => {
@@ -302,4 +303,6 @@ export const useDictator = () => {
         speed, setSpeed,
         modelStrategy, setModelStrategy
     };
+
 };
+

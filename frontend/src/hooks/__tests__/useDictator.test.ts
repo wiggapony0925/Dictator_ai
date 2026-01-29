@@ -32,12 +32,12 @@ describe('useDictator', () => {
         const { result } = renderHook(() => useDictator());
 
         // Mock success response with controlled promise to verify loading state
-        let resolvePromise: any;
+        let resolvePromise: (value: unknown) => void;
         const promise = new Promise((resolve) => {
             resolvePromise = resolve;
         });
 
-        (axios.post as any).mockReturnValue(promise);
+        vi.mocked(axios.post).mockReturnValue(promise);
 
         const file = new File(['dummy'], 'test.pdf', { type: 'application/pdf' });
         const event = {
@@ -74,7 +74,7 @@ describe('useDictator', () => {
         const { result } = renderHook(() => useDictator());
 
         // 1. Load segments
-        (axios.post as any).mockResolvedValueOnce({
+        (vi.mocked(axios.post)).mockResolvedValueOnce({
             data: {
                 success: true,
                 segments: [{ text: 'Seg1', bbox: [] }, { text: 'Seg2', bbox: [] }],
@@ -84,13 +84,13 @@ describe('useDictator', () => {
 
         const file = new File(['dummy'], 'test.pdf', { type: 'application/pdf' });
         await act(async () => {
-            result.current.handleFileChange({ target: { files: [file] } } as any);
+            result.current.handleFileChange({ target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>);
         });
 
         await waitFor(() => expect(result.current.segments).toHaveLength(2));
 
         // 2. Play Segment 0
-        (axios.post as any).mockResolvedValueOnce({ data: { audio_url: 'audio1.mp3' } });
+        (vi.mocked(axios.post)).mockResolvedValueOnce({ data: { audio_url: 'audio1.mp3' } });
 
         await act(async () => {
             result.current.playSegment(0);
@@ -99,7 +99,7 @@ describe('useDictator', () => {
         expect(result.current.hasStartedReading).toBe(true);
 
         // 3. Play Segment 1 (should abort Previous)
-        (axios.post as any).mockResolvedValueOnce({ data: { audio_url: 'audio2.mp3' } });
+        (vi.mocked(axios.post)).mockResolvedValueOnce({ data: { audio_url: 'audio2.mp3' } });
         await act(async () => {
             result.current.playSegment(1);
         });
@@ -108,7 +108,7 @@ describe('useDictator', () => {
         expect(axios.post).toHaveBeenCalledTimes(3);
 
         // The last call should have a signal
-        const lastCallArgs = (axios.post as any).mock.calls[2];
+        const lastCallArgs = vi.mocked(axios.post).mock.calls[2];
         expect(lastCallArgs[2]).toHaveProperty('signal');
     });
 });

@@ -1,5 +1,5 @@
 import fitz  # PyMuPDF
-import re
+
 
 def extract_sentences_with_coordinates(file_path):
     """
@@ -61,6 +61,4 @@ def extract_sentences_with_coordinates(file_path):
                     
     return segments
 
-def create_segment(words, page_num):
-    # Deprecated / Unused helper now that we iterate blocks directly
-    pass
+
