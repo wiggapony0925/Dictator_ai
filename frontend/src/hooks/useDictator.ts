@@ -150,6 +150,9 @@ export const useDictator = () => {
                 }
             );
 
+            // Double Check: If user paused during the fetch, don't start playing
+            if (controller.signal.aborted) return;
+
             const audioUrl = res.data.audio_url;
             audioRef.current.src = audioUrl;
 
@@ -174,7 +177,7 @@ export const useDictator = () => {
             }
         } catch (err: unknown) {
             if (axios.isCancel(err)) {
-                console.log('Request cancelled for segment:', index);
+                // Request cancelled (e.g. paused or skipped)
             } else {
                 console.error("Audio error:", err);
                 setError(handleApiError(err));
@@ -187,6 +190,12 @@ export const useDictator = () => {
     // Toggle Play/Pause
     const togglePlay = () => {
         if (isPlaying) {
+            // FORCE PAUSE
+            // 1. Cancel any pending network API calls so they don't resolve and start playing later
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+            // 2. Pause audio element immediately
             audioRef.current.pause();
             setIsPlaying(false);
         } else {
@@ -208,15 +217,11 @@ export const useDictator = () => {
         }
     }, [speed]);
 
-    // Instant Voice Update (Debounced)
+    // Instant Voice Update
     useEffect(() => {
         if (isPlaying && currentSegmentIndex !== -1) {
-            // Restart current segment with new voice
-            // Small timeout to debounce rapid changes
-            const timer = setTimeout(() => {
-                playSegment(currentSegmentIndex);
-            }, 200); // reduced from 500 for snappier feel
-            return () => clearTimeout(timer);
+            // Restart current segment immediately with new voice
+            playSegment(currentSegmentIndex);
         }
     }, [voice, isPlaying, currentSegmentIndex, playSegment]);
 
