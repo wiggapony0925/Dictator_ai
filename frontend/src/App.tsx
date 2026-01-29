@@ -221,7 +221,7 @@ function App() {
       {/* Error Toast */}
       {/* Error Toast */}
       {error && (
-        <Box position="absolute" top="5" right="5" style={{ zIndex: 20 }}>
+        <Box position="absolute" top="5" right="5" style={{ zIndex: 9999 }}>
           <Card style={{ backgroundColor: 'var(--red-3)', color: 'var(--red-11)' }}>
             <Flex gap="3" align="center">
               <Text>{error}</Text>

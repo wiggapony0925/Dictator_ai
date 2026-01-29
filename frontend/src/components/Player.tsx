@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Flex, IconButton, Text, Box } from '@radix-ui/themes';
-import * as SliderPrimitive from '@radix-ui/react-slider';
+import { Slider } from './ui/Slider';
 import { Play, Pause } from 'lucide-react';
 
 interface PlayerProps {
@@ -40,7 +40,7 @@ export const Player: React.FC<PlayerProps> = ({
     };
 
     return (
-        <Card size="2" className="player-card">
+        <Card size="2" className="player-card" style={{ backgroundColor: '#15161cd4' }}>
             <Flex align="center" gap="4">
                 <IconButton size="3" variant="soft" onClick={onPlayPause} radius="full" className="player-play-btn">
                     {isPlaying ? <Pause size={20} /> : <Play size={20} />}
@@ -57,19 +57,14 @@ export const Player: React.FC<PlayerProps> = ({
                     </Flex>
 
                     {/* Radix Primitive Slider */}
-                    <SliderPrimitive.Root
-                        className="SliderRoot"
+                    {/* Custom Slider Component */}
+                    <Slider
                         value={localValue}
                         max={Math.max(0, totalSegments - 1)}
                         step={1}
                         onValueChange={handleValueChange}
                         onValueCommit={handleValueCommit}
-                    >
-                        <SliderPrimitive.Track className="SliderTrack">
-                            <SliderPrimitive.Range className="SliderRange" />
-                        </SliderPrimitive.Track>
-                        <SliderPrimitive.Thumb className="SliderThumb" aria-label="Volume" />
-                    </SliderPrimitive.Root>
+                    />
                 </Box>
             </Flex>
         </Card>

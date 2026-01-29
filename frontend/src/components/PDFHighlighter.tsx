@@ -21,7 +21,8 @@ export const PDFHighlighter: React.FC<PDFHighlighterProps> = ({ pdfUrl, currentS
     const [pageScales, setPageScales] = useState<Record<number, number>>({});
     const [numPages, setNumPages] = useState<number>(0);
     const containerRef = useRef<HTMLDivElement>(null);
-    const [pageWidth] = useState(600);
+    const [pageWidth, setPageWidth] = useState(600);
+    const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
     // For scrolling to the active page
     const activePageRef = useRef<HTMLDivElement>(null);
@@ -36,6 +37,26 @@ export const PDFHighlighter: React.FC<PDFHighlighterProps> = ({ pdfUrl, currentS
             activePageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }, [currentSegment?.page]);
+
+    // Resize Observer to adjust page width
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        resizeObserverRef.current = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                // Subtract padding (current padding is 20px * 2 = 40px)
+                // Using 40px subtraction to keep it safe inside the container
+                const newWidth = entry.contentRect.width - 40;
+                setPageWidth(prev => Math.abs(prev - newWidth) > 10 ? newWidth : prev);
+            }
+        });
+
+        resizeObserverRef.current.observe(containerRef.current);
+
+        return () => {
+            resizeObserverRef.current?.disconnect();
+        };
+    }, []);
 
     return (
         <Box

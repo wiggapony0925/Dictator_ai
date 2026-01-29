@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, Button, Flex, Text, TextField, Select, Slider, RadioCards, Box, IconButton } from '@radix-ui/themes';
+import { Dialog, Button, Flex, Text, TextField, Select, RadioCards, Box, IconButton } from '@radix-ui/themes';
+import { Slider } from './ui/Slider';
 import { Settings, Mic2, Gauge, Cpu, X } from 'lucide-react';
 
 interface SettingsSheetProps {
@@ -119,29 +120,19 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
                     {/* Speed Slider */}
                     <Box>
                         <div style={{ background: 'var(--gray-3)', padding: 16, borderRadius: 12 }}>
-                            <Flex gap="2" align="center" mb="4" justify="between">
+                            <Flex gap="2" align="center" mb="2" justify="between">
                                 <Flex gap="2" align="center">
-                                    <Gauge size={18} />
-                                    <Text size="3" weight="bold">Speed</Text>
+                                    <Gauge size={16} />
+                                    <Text size="2" weight="bold">Speed: {speed}x</Text>
                                 </Flex>
-                                <Text size="3" weight="bold" color="blue">{speed}x</Text>
                             </Flex>
-
-                            {/* Chunky Slider */}
                             <Slider
-                                size="3"
                                 value={[speed]}
-                                min={0.5}
-                                max={3.0}
-                                step={0.1}
+                                min={0.25}
+                                max={4.0}
+                                step={0.25}
                                 onValueChange={(vals) => setSpeed(vals[0])}
-                                style={{ height: 24 }} // Increase touch target
                             />
-                            <Flex justify="between" mt="2">
-                                <Text size="1" color="gray">0.5x</Text>
-                                <Text size="1" color="gray">Normal</Text>
-                                <Text size="1" color="gray">3.0x</Text>
-                            </Flex>
                         </div>
                     </Box>
 
