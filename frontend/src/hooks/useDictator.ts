@@ -22,6 +22,7 @@ export const useDictator = () => {
 
     const audioRef = useRef<HTMLAudioElement>(new Audio());
     const abortControllerRef = useRef<AbortController | null>(null);
+    const latestSegmentIndexRef = useRef<number>(-1);
 
     // Load Settings from LocalStorage
     useEffect(() => {
@@ -91,6 +92,7 @@ export const useDictator = () => {
             setCurrentSegmentIndex(-1);
             setHasStartedReading(false); // Reset button state
             setError(null);
+            clearCache();
 
             // Auto-Read Trigger
             processFile(selectedFile);
@@ -117,48 +119,114 @@ export const useDictator = () => {
         return segments.length > 30 ? 'tts-1-hd' : 'gpt-4o-mini-tts';
     }, [modelStrategy, segments]);
 
+    // --- Smart Caching & Prefetching Logic ---
+    const audioCache = useRef<Map<string, string>>(new Map()); // Key -> AudioURL
+    const activeRequests = useRef<Map<string, Promise<string>>>(new Map()); // Key -> Promise<AudioURL>
+    const requestControllers = useRef<Map<string, AbortController>>(new Map()); // Key -> AbortController
+
+    // Generate strict cache key based on segment and settings
+    // Generate strict cache key based on segment and settings
+    // NOTE: We do NOT include speed in the key anymore. We request 1.0x from backend.
+    const getCacheKey = useCallback((index: number, v: string, m: string) => {
+        return `${index}-${v}-${m}`;
+    }, []);
+
+    // Clear all caches (used on file change or reset)
+    const clearCache = useCallback(() => {
+        // Abort all pending
+        requestControllers.current.forEach(ctrl => ctrl.abort());
+        requestControllers.current.clear();
+
+        // Revoke URLs to free memory
+        audioCache.current.forEach(url => URL.revokeObjectURL(url));
+        audioCache.current.clear();
+        activeRequests.current.clear();
+    }, []);
+
+    // Fetch Audio (Cached or Network)
+    const fetchAudio = useCallback(async (index: number): Promise<string> => {
+        const text = segments[index].text;
+        const model = getModel();
+        // Use generic key (no speed)
+        const key = getCacheKey(index, voice, model);
+
+        // 1. Check Memory Cache
+        if (audioCache.current.has(key)) {
+            return audioCache.current.get(key)!;
+        }
+
+        // 2. Check Pending Requests (Deduplicate)
+        if (activeRequests.current.has(key)) {
+            return activeRequests.current.get(key)!;
+        }
+
+        // 3. Network Request
+        const controller = new AbortController();
+        requestControllers.current.set(key, controller);
+
+        const promise = (async () => {
+            try {
+                // Request speed 1.0 ALWAYS, handle real speed client-side
+                const res = await axios.post('/speak',
+                    { text, voice, speed: 1.0, model },
+                    {
+                        headers: { 'X-OpenAI-Key': apiKey },
+                        signal: controller.signal
+                    }
+                );
+
+                const url = res.data.audio_url;
+
+                // Cache Success
+                audioCache.current.set(key, url);
+                return url;
+            } finally {
+                // Cleanup Pending State
+                activeRequests.current.delete(key);
+                requestControllers.current.delete(key);
+            }
+        })();
+
+        activeRequests.current.set(key, promise);
+        return promise;
+    }, [segments, voice, getModel, apiKey, getCacheKey]);
+
+    // Cleanup cache on unmount
+    useEffect(() => {
+        return () => clearCache();
+    }, [clearCache]);
+
+
     // Play a specific segment
     const playSegment = useCallback(async (index: number) => {
         if (index < 0 || index >= segments.length) return;
-
-        // CANCEL PREVIOUS REQUEST
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
 
         // STOP PREVIOUS AUDIO INSTANTLY
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
 
-        // CREATE NEW CONTROLLER
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-
         setHasStartedReading(true);
+        latestSegmentIndexRef.current = index; // Update intended target
         setCurrentSegmentIndex(index);
         setIsPlaying(true);
 
-        const text = segments[index].text;
-        const model = getModel();
-
         try {
-            const res = await axios.post('/speak',
-                { text, voice, speed, model },
-                {
-                    headers: { 'X-OpenAI-Key': apiKey },
-                    signal: controller.signal
-                }
-            );
+            // Fetch Current (Fast if cached/prefetched)
+            const audioUrl = await fetchAudio(index);
 
-            // Double Check: If user paused during the fetch, don't start playing
-            if (controller.signal.aborted) return;
+            // STATE CHECK: Ensure user hasn't skipped/paused while loading
+            // If the user clicked another segment while we were fetching this one, ABORT playback.
+            if (index !== latestSegmentIndexRef.current) return;
 
-            const audioUrl = res.data.audio_url;
+            // Also check if user decided to pause/reset while loading
+            if (!hasStartedReading && latestSegmentIndexRef.current === -1) return;
+
             audioRef.current.src = audioUrl;
 
-            // Add one-time error listener for this playback attempt
+            // Error Handler
             const errorHandler = () => {
-                setError("Audio Error: Failed to load audio segment (404). Please try regenerating.");
+                console.error("Audio Load Error");
+                setError("Audio Error: Failed to load.");
                 setIsPlaying(false);
             };
             audioRef.current.addEventListener('error', errorHandler, { once: true });
@@ -166,36 +234,38 @@ export const useDictator = () => {
             const playPromise = audioRef.current.play();
             if (playPromise !== undefined) {
                 playPromise.catch((err: unknown) => {
-                    audioRef.current.removeEventListener('error', errorHandler); // Cleanup
-                    // Ignore AbortError and known cancellation
+                    audioRef.current.removeEventListener('error', errorHandler);
                     if (err instanceof Error && err.name !== 'AbortError') {
-                        console.error("Playback failed:", err);
-                        if (currentSegmentIndex === index) setIsPlaying(false);
-                        if (!error) setError("Playback Error: Unable to play audio.");
+                        // Only report if we actually expected to be playing this segment
+                        // And verify we are STILL supposed to be playing it
+                        if (index === latestSegmentIndexRef.current) {
+                            console.error("Playback failed:", err);
+                        }
                     }
                 });
             }
+
+            // *** PREFETCH NEXT SEGMENTS ***
+            // Prefetch next 2 segments to ensure buffer against network latency
+            if (index + 1 < segments.length) fetchAudio(index + 1).catch(() => { });
+            if (index + 2 < segments.length) fetchAudio(index + 2).catch(() => { });
+
         } catch (err: unknown) {
             if (axios.isCancel(err)) {
-                // Request cancelled (e.g. paused or skipped)
+                // Ignore
             } else {
-                console.error("Audio error:", err);
+                console.error("Audio fetch error:", err);
                 setError(handleApiError(err));
                 setIsPlaying(false);
             }
         }
-    }, [segments, apiKey, voice, speed, getModel, currentSegmentIndex, error]);
+    }, [segments, fetchAudio, hasStartedReading]);
 
 
     // Toggle Play/Pause
     const togglePlay = () => {
         if (isPlaying) {
-            // FORCE PAUSE
-            // 1. Cancel any pending network API calls so they don't resolve and start playing later
-            if (abortControllerRef.current) {
-                abortControllerRef.current.abort();
-            }
-            // 2. Pause audio element immediately
+            // Just pause. The fetch, if pending, will complete and cache silently.
             audioRef.current.pause();
             setIsPlaying(false);
         } else {
@@ -217,13 +287,13 @@ export const useDictator = () => {
         }
     }, [speed]);
 
-    // Instant Voice Update
+    // Instant Voice/Model Update
     useEffect(() => {
         if (isPlaying && currentSegmentIndex !== -1) {
-            // Restart current segment immediately with new voice
+            // Restart current segment immediately with new voice/model
             playSegment(currentSegmentIndex);
         }
-    }, [voice, isPlaying, currentSegmentIndex, playSegment]);
+    }, [voice, modelStrategy, isPlaying, currentSegmentIndex, playSegment]);
 
     // Audio Event Listeners (Ended & Media Session)
     useEffect(() => {
@@ -285,6 +355,8 @@ export const useDictator = () => {
         setHasStartedReading(false);
         setError(null);
         setIsLoading(false);
+
+        clearCache();
 
         // Reset file input if exists (cleaner way would be ref, but this works given current structure)
         const fileInput = document.getElementById('file') as HTMLInputElement;

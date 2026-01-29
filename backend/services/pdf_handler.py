@@ -22,7 +22,8 @@ def extract_sentences_with_coordinates(file_path):
 
     for page_num, page in enumerate(doc, start=1):
         # "dict" format gives us the structure: block -> lines -> spans
-        blocks = page.get_text("dict")["blocks"]
+        # Added sort=True to ensure logical reading order (e.g. multi-column layouts)
+        blocks = page.get_text("dict", sort=True)["blocks"]
         
         for block in blocks:
             if block["type"] == 0:  # Text block (0 = text, 1 = image)
