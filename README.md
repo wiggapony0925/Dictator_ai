@@ -1,108 +1,125 @@
-# Dictator AI - Interactive PDF to Audio Studio
+# Dictator AI 🎙️📄
 
-Dictator AI is a professional-grade web application that transforms PDF documents into interactive, high-quality audio sessions. It features real-time text synchronization, smart AI model optimization, and a production-ready UI built with React 19 and Radix UI.
+> **Turn any PDF into an interactive audio experience.**  
+> *Real-time text syncing, professional AI narration, and native mobile design.*
 
-## 🚀 Key Features
+![Dictator AI Logo](/public/logo.png)
 
-### 🎧 Interactive Audio Studio
--   **OpenAI TTS Integration**: Supports `tts-1`, `tts-1-hd`, and the ultra-fast `gpt-4o-mini-tts`.
--   **Smart Optimization**: Automatically selects the best model based on file size to balance cost and quality.
--   **Studio Controls**: full control over **Voice** (Alloy, Echo, Nova...) and **Speed** (0.25x - 4.0x).
+## Overview
 
-### 📄 PDF Intelligence
--   **Real-Time Sync**: As the audio reads, the corresponding text on the PDF is highlighted in real-time.
--   **Native Rendering**: Uses `react-pdf` to render actual PDF pages, not just text extraction.
--   **Spatial Awareness**: Backend uses `PyMuPDF` to extract precise bounding box coordinates for every sentence.
+**Dictator AI** is a modern web application that bridges the gap between reading and listening. It analyzes PDF documents, segments them into natural paragraphs, and uses OpenAI's advanced TTS (Text-to-Speech) models to narrate them with human-like quality. 
 
-### 📱 Modern Engineering
--   **Mobile-First Design**: Responsive layout that stacks perfectly on mobile devices.
--   **Background Audio**: Supports the Media Session API, allowing playback to continue when the screen is locked.
--   **Clean Architecture**:
-    -   **Frontend**: React + TypeScript + Vite.
-    -   **Styling**: Modular SCSS (7-1 Pattern) + BEM Naming Convention + Radix Themes.
-    -   **Backend**: Flask + Python 3.10+.
+Unlike standard screen readers, Dictator AI provides **spatial context**—highlighting the exact text block being read on the original PDF layout in real-time.
 
-## 🛠️ Architecture
+## ✨ Key Features
 
-### Frontend (`/frontend`)
--   **Framework**: React 19, Vite, TypeScript.
--   **UI Library**: Radix UI Primitives & Radix Themes.
--   **Styling**: SCSS Modules (`styles/abstracts`, `styles/components`, `styles/layout`) following BEM.
--   **State**: Custom `useDictator` hook managing audio, file, and settings state.
+### 🎧 Studio-Quality Audio
+*   **Neural Voice Engine**: Powered by OpenAI's `tts-1` & `tts-1-hd`.
+*   **Smart Selection**: Automatically chooses `gpt-4o-mini-tts` for speed or HD models for quality.
+*   **Live Controls**: Adjust **Speed** (0.5x - 3.0x) and **Voice** (Alloy, Echo, Shimmer...) instantly.
 
-### Backend (`/backend`)
--   **Framework**: Flask.
--   **PDF Engine**: `PyMuPDF` (fitz) for text and coordinate extraction.
--   **AI Engine**: OpenAI API (TTS).
+### 📱 Mobile-First Experience
+*   **Responsive Design**: A buttery-smooth layout that adapts from desktop split-views to a modern **mobile bottom-sheet** interface.
+*   **Touch Optimized**: Large tap targets, swipeable interactions, and `100dvh` (Dynamic Viewport Height) for a native app feel.
+*   **Background Play**: Continue listening even when your screen is locked.
 
-## ⚡ Quick Start
+### 🧠 Intelligent PDF Processing
+*   **Paragraph Segmentation**: Smart backend logic groups sentences into natural reading blocks.
+*   **Precision Highlighting**: Real-time visual feedback shows you exactly where you are on the page.
+*   **Interactive Layer**: Click any paragraph on the PDF to jump the audio instantly to that spot.
+
+## 🛠️ Tech Stack
+
+### Frontend
+*   **Framework**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
+*   **Language**: TypeScript
+*   **Styling**: SCSS (BEM Architecture) + [Radix UI Themes](https://www.radix-ui.com/)
+*   **PDF Engine**: `react-pdf`
+*   **State**: Custom Hooks
+
+### Backend
+*   **Server**: Flask (Python 3.11+)
+*   **PDF Processing**: `PyMuPDF` (fitz)
+*   **AI Integration**: OpenAI Python SDK
+*   **Production Server**: Gunicorn
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
--   Node.js 18+
--   Python 3.10+
--   OpenAI API Key
+*   Node.js 20+
+*   Python 3.11+
+*   OpenAI API Key
 
-### 1. Backend Setup
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+### Local Development
 
-# Set your API Key
-export OPENAI_API_KEY=sk-...
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/yourusername/dictator-ai.git
+    cd dictator-ai
+    ```
 
-# Run Server (Port 5001)
-flask run --port 5001
+2.  **Backend Setup**
+    ```bash
+    cd backend
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    
+    # Run the Flask Server
+    export FLASK_APP=app.py
+    flask run --port 5001
+    ```
+
+3.  **Frontend Setup**
+    ```bash
+    cd frontend
+    npm install
+    npm run dev
+    ```
+    Visit `http://localhost:5173`.
+
+---
+
+## 🐳 Docker Deployment (Recommended)
+
+The application is containerized with a highly optimized **Multi-Stage Build**.
+
+1.  **Build the Image**
+    ```bash
+    docker build -t dictator-ai .
+    ```
+
+2.  **Run the Container**
+    ```bash
+    docker run -p 8080:5001 -e OPENAI_API_KEY=your_key_here dictator-ai
+    ```
+    *Note: You can also skip the env var if you prefer to enter the key in the UI Settings.*
+
+3.  **Access**
+    Go to `http://localhost:8080`.
+
+---
+
+## 🎨 Architecture & Styles
+
+The project follows a strict **SCSS BEM** methodology for clean, maintainable styles.
+
+*   `frontend/src/styles/main.scss`: Entry point.
+*   `frontend/src/styles/_variables.scss`: Design tokens (Colors, Spacing).
+*   `frontend/src/styles/_mixins.scss`: Responsive helpers.
+
+**Example:**
+```scss
+.mobile-layout {
+    &__bottom-sheet {
+        @include mobile {
+            height: 250px;
+        }
+    }
+}
 ```
 
-### 2. Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Open [http://localhost:5173](http://localhost:5173).
-
-## 🐳 Deployment (Recommended)
-
-The easiest way to run Dictator AI (Frontend + Backend) is with Docker.
-
-### 1. Build the Image
-```bash
-docker build -t dictator-ai .
-```
-
-### 2. Run the Container
-```bash
-docker run -p 8080:5001 dictator-ai
-```
-Now visit **http://localhost:8080**. Users will be prompted to enter their OpenAI API Key in the Settings menu.
-
-### Option 2: Manual Run
-1. **Frontend**:
-   ```bash
-   cd frontend
-   npm install && npm run build
-   ```
-2. **Backend**:
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   # The backend will now automatically serve the built frontend at root /
-   gunicorn -w 4 -b 0.0.0.0:5001 app:app
-   ```
-   Visit http://localhost:5001
-
-## 🌟 New Features (v2.0)
-- **Auto-Read**: Instant analysis on file drag-and-drop.
-- **Paragraph Logic**: Smart block segmentation for natural reading flow.
-- **Robust Error Handling**: Custom messages for 401, 429 (Rate Limits), and network issues.
-- **Instant Playback**: Zero-latency segment switching with request cancellation.
-- **Settings**: Voice/Speed changes apply live without reload.
-
-## 🤝 Contributing
-Styles are located in `frontend/src/styles/`. Please follow the BEM naming convention:
--   Block: `.app-navbar`
--   Element: `.app-navbar__content`
--   Modifier: `.app-navbar--active`
+## 📄 License
+MIT License. Created by Jeffrey Fernandez.

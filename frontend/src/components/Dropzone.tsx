@@ -5,15 +5,27 @@ import { UploadCloud } from 'lucide-react';
 
 interface DropzoneProps {
     onFileSelect: (file: File) => void;
+    onError: (message: string) => void;
     isLoading: boolean;
 }
 
-export const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, isLoading }) => {
-    const onDrop = useCallback((acceptedFiles: File[]) => {
+export const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, onError, isLoading }) => {
+    const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
+        // Handle Accepted Files
         if (acceptedFiles.length > 0) {
             onFileSelect(acceptedFiles[0]);
         }
-    }, [onFileSelect]);
+
+        // Handle Rejected Files (Wrong Type)
+        if (fileRejections.length > 0) {
+            const rejection = fileRejections[0];
+            if (rejection.errors.some((e: any) => e.code === 'file-invalid-type')) {
+                onError("Sorry, we only accept PDF files. 📄");
+            } else {
+                onError("File upload failed. Please try again.");
+            }
+        }
+    }, [onFileSelect, onError]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
@@ -25,16 +37,16 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onFileSelect, isLoading }) =
     return (
         <div {...getRootProps()} className={`dropzone ${isDragActive ? 'dropzone--active' : ''}`}>
             <input {...getInputProps()} />
-            <Flex direction="column" align="center" justify="center" gap="4" style={{ height: '100%', minHeight: '300px' }}>
+            <Flex direction="column" align="center" justify="center" gap="4" style={{ height: '100%', width: '100%' }}>
                 <div className="dropzone__icon-wrapper">
-                    <UploadCloud size={48} strokeWidth={1.5} />
+                    <UploadCloud size={64} strokeWidth={1.5} />
                 </div>
                 <Box style={{ textAlign: 'center' }}>
                     <Text size="5" weight="bold" as="div" mb="1">
-                        {isDragActive ? "Drop text here" : "Upload a PDF"}
+                        {isDragActive ? "Drop PDF here" : "Upload a PDF"}
                     </Text>
                     <Text size="2" color="gray">
-                        Drag & drop or click to browse
+                        Drag & drop or tap to browse
                     </Text>
                 </Box>
                 <Button size="3" variant="soft" disabled={isLoading}>

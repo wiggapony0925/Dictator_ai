@@ -1,0 +1,25 @@
+@use 'sass:map';
+
+// --- Colors (Mapped to Radix UI Themes mainly, but defined for SCSS usage) ---
+$color-bg-app: var(--gray-1);
+$color-bg-panel: var(--gray-2);
+$color-bg-surface: var(--gray-3);
+
+$color-text-primary: var(--gray-12);
+$color-text-secondary: var(--gray-11);
+
+$color-accent: var(--accent-9);
+$color-accent-hover: var(--accent-10);
+
+$color-border: var(--gray-6);
+
+// --- Layout ---
+$navbar-height: 60px;
+$sidebar-width: 400px;
+$bottom-sheet-height: 250px;
+
+// --- Z-Index ---
+$z-index-pdf: 1;
+$z-index-navbar: 100;
+$z-index-bottom-sheet: 50;
+$z-index-modal: 1000;

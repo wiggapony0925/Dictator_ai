@@ -1,15 +1,164 @@
-// Abstracts
-@use 'abstracts/variables' as *;
-@use 'abstracts/mixins' as *;
+@use 'variables' as *;
+@use 'mixins' as *;
 
-// Base
-@use 'base/reset';
+// Global Resets already in index.css (Radix), but let's reinforce specific app needs here
 
-// Layout
-@use 'layout/container';
-@use 'layout/grid';
+.app-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    /* Dynamic Viewport Height */
+    width: 100%;
+    overflow: hidden;
+    background-color: $color-bg-app;
+    position: relative;
+}
 
-// Components
-@use 'components/navbar';
-@use 'components/player';
-@use 'components/dropzone';
+// --- Navbar ---
+.app-navbar {
+    height: $navbar-height;
+    background-color: $color-bg-surface;
+    border-bottom: 1px solid $color-border;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    z-index: $z-index-navbar;
+
+    &__content {
+        width: 100%;
+        @include flex-between;
+        gap: 8px; // Prevent collision
+    }
+
+    &__controls {
+        @include flex-center;
+        gap: 12px;
+        flex-shrink: 0; // Prevent buttons from squishing
+    }
+}
+
+// --- Split View / Layout ---
+.split-view {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+
+    &__panel--left,
+    &__panel--right {
+        height: 100%;
+        overflow: hidden;
+    }
+}
+
+// --- Resize Handle (Desktop) ---
+.resize-handle {
+    width: 8px;
+    background-color: $color-bg-surface;
+    cursor: col-resize;
+    @include flex-center;
+    transition: background-color 0.2s;
+
+    &:hover,
+    &[data-resize-handle-active] {
+        background-color: $color-accent;
+    }
+
+    &__bar {
+        width: 2px;
+        height: 40px;
+        background-color: $color-border;
+        border-radius: 1px;
+    }
+}
+
+// --- Mobile Specifics ---
+.mobile-layout {
+    @include full-size;
+    position: relative;
+
+    &__pdf-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: $bottom-sheet-height;
+        z-index: $z-index-pdf;
+        overflow: hidden;
+    }
+
+    &__bottom-sheet {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: $bottom-sheet-height;
+        z-index: $z-index-bottom-sheet;
+        background-color: $color-bg-panel;
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+
+        &-handle-area {
+            width: 100%;
+            height: 24px;
+            @include flex-center;
+            cursor: grab;
+        }
+
+        &-handle-bar {
+            width: 40px;
+            height: 4px;
+            border-radius: 2px;
+            background-color: var(--gray-8);
+        }
+
+        &-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+    }
+}
+
+// --- Dropzone ---
+.dropzone {
+    border: 2px dashed $color-border;
+    border-radius: 12px;
+    padding: 40px;
+    height: 100%;
+    min-height: 400px;
+    @include flex-center;
+    flex-direction: column;
+    transition: all 0.2s ease;
+    background-color: $color-bg-surface;
+    cursor: pointer;
+
+    &--active,
+    &:hover {
+        border-color: $color-accent;
+        background-color: var(--accent-2);
+    }
+
+    &__icon-wrapper {
+        color: $color-accent;
+        margin-bottom: 16px;
+    }
+}
+
+// --- Audio Player Wrapper ---
+.audio-player-wrapper {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    z-index: $z-index-navbar;
+    /* Above PDF but below modal */
+
+    @include mobile {
+        bottom: $bottom-sheet-height + 20px;
+    }
+}

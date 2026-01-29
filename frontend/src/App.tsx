@@ -5,10 +5,11 @@ import { useDictator } from './hooks/useDictator';
 import { LoadingOverlay } from './components/LoadingOverlay';
 import { Player } from './components/Player';
 import { Reader } from './components/Reader';
-import { SettingsDialog } from './components/SettingsDialog';
+import { SettingsSheet } from './components/SettingsSheet';
 import { PDFHighlighter } from './components/PDFHighlighter';
 import { Dropzone } from './components/Dropzone';
-import { Upload } from 'lucide-react';
+import { Upload, Trash2 } from 'lucide-react';
+import './styles/main.scss';
 
 function App() {
   const {
@@ -17,6 +18,7 @@ function App() {
     file,
     handleFileChange,
     handleConvert,
+    resetState,
     segments,
     pdfUrl,
     currentSegmentIndex,
@@ -51,13 +53,17 @@ function App() {
       {/* Navbar */}
       <div className="app-navbar">
         <div className="app-navbar__content">
-          <Box>
-            <Heading size="5" weight="bold" highContrast>Dictator AI</Heading>
-            <Text size="2" color="gray">Interactive PDF Reader</Text>
-          </Box>
+          <Flex align="center" gap="3">
+            <img src="/logo.png" alt="Dictator AI Logo" style={{ height: 32, width: 'auto' }} />
+            {!isMobile && (
+              <Box>
+                <Heading size="4" weight="bold" highContrast>Dictator AI</Heading>
+              </Box>
+            )}
+          </Flex>
 
           <Flex className="app-navbar__controls" gap="3" align="center">
-            <form onSubmit={handleConvert} style={{ display: 'flex', gap: '10px', alignItems: 'center', width: '100%' }}>
+            <form onSubmit={handleConvert} style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
               {/* Hidden Input */}
               <input
                 type="file"
@@ -71,23 +77,41 @@ function App() {
                 variant="surface"
                 type="button"
                 onClick={() => document.getElementById('file')?.click()}
+                style={isMobile ? { padding: '0 8px' } : {}}
               >
                 <Upload size={16} />
-                {file ? file.name : 'Select PDF'}
+                {!isMobile && (file ? (file.name.length > 20 ? file.name.substring(0, 18) + '...' : file.name) : 'Select PDF')}
               </Button>
+
+              {file && (
+                <Button
+                  type="button"
+                  color="red"
+                  variant="soft"
+                  onClick={resetState}
+                  title="Remove PDF"
+                  style={{ padding: '0 8px' }}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              )}
 
               <Button
                 type="button"
-                disabled={!file || isLoading || hasStartedReading || segments.length === 0}
+                disabled={!file || isLoading || hasStartedReading || segments.length === 0 || !apiKey}
                 onClick={() => {
                   if (segments.length > 0) playSegment(0);
                 }}
+                color={!apiKey && file ? "gray" : "blue"}
+                style={isMobile ? { padding: '0 12px' } : {}}
               >
-                Start Reading
+                {!apiKey ? (isMobile ? "Key" : "Enter API Key") :
+                  (hasStartedReading ? (isMobile ? "..." : "Reading...") : (isMobile ? "Read" : "Start Reading"))}
               </Button>
             </form>
 
-            <SettingsDialog
+            {/* Navbar Controls */}
+            <SettingsSheet
               apiKey={apiKey}
               setApiKey={setApiKey}
               voice={voice}
@@ -101,45 +125,82 @@ function App() {
         </div>
       </div>
 
-      {/* Main Content: Split View / Droppable Panel */}
+      {/* Main Content */}
       <div className="split-view">
         {pdfUrl ? (
-          <PanelGroup orientation={isMobile ? "vertical" : "horizontal"}>
-            {/* Left: PDF */}
-            <Panel defaultSize={50} minSize={20} className="split-view__panel--left">
-              <PDFHighlighter
-                pdfUrl={pdfUrl}
-                currentSegment={currentSegment}
-                segments={segments}
-                onSegmentClick={playSegment}
-              />
-            </Panel>
+          isMobile ? (
+            /* Mobile Layout: Stacked Layers using BEM */
+            <div className="mobile-layout">
+              {/* Layer 1: PDF (Full Screen Background) */}
+              <div className="mobile-layout__pdf-layer">
+                <PDFHighlighter
+                  pdfUrl={pdfUrl}
+                  currentSegment={currentSegment}
+                  segments={segments}
+                  onSegmentClick={playSegment}
+                />
+              </div>
 
-            <PanelResizeHandle className="resize-handle">
-              <div className="resize-handle__bar" />
-            </PanelResizeHandle>
+              {/* Layer 2: Reader (Bottom Sheet) */}
+              <div className="mobile-layout__bottom-sheet">
+                {/* Handle */}
+                <div className="mobile-layout__bottom-sheet-handle-area">
+                  <div className="mobile-layout__bottom-sheet-handle-bar"></div>
+                </div>
 
-            {/* Right: Reader */}
-            <Panel defaultSize={50} minSize={20} className="split-view__panel--right">
-              <Reader
-                pdfUrl={pdfUrl}
-                segments={segments}
-                currentSegmentIndex={currentSegmentIndex}
-                onSegmentClick={playSegment}
-              />
-            </Panel>
-          </PanelGroup>
+                <div className="mobile-layout__bottom-sheet-content">
+                  <Reader
+                    pdfUrl={pdfUrl}
+                    segments={segments}
+                    currentSegmentIndex={currentSegmentIndex}
+                    onSegmentClick={playSegment}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Desktop Layout: Resizable Horizontal Split */
+            <PanelGroup orientation="horizontal" style={{ height: '100%' }}>
+              {/* Left: PDF */}
+              <Panel defaultSize={50} minSize={20} className="split-view__panel--left">
+                <PDFHighlighter
+                  pdfUrl={pdfUrl}
+                  currentSegment={currentSegment}
+                  segments={segments}
+                  onSegmentClick={playSegment}
+                />
+              </Panel>
+
+              <PanelResizeHandle className="resize-handle">
+                <div className="resize-handle__bar" />
+              </PanelResizeHandle>
+
+              {/* Right: Reader */}
+              <Panel defaultSize={50} minSize={20} className="split-view__panel--right">
+                <Reader
+                  pdfUrl={pdfUrl}
+                  segments={segments}
+                  currentSegmentIndex={currentSegmentIndex}
+                  onSegmentClick={playSegment}
+                />
+              </Panel>
+            </PanelGroup>
+          )
         ) : (
           <div style={{ height: '100%', padding: '2rem' }}>
-            <Dropzone onFileSelect={(f) => {
-              const dt = new DataTransfer();
-              dt.items.add(f);
-              const input = document.getElementById('file') as HTMLInputElement;
-              if (input) {
-                input.files = dt.files;
-                input.dispatchEvent(new Event('change', { bubbles: true }));
-              }
-            }} isLoading={isLoading} />
+            <Dropzone
+              onFileSelect={(f) => {
+                const dt = new DataTransfer();
+                dt.items.add(f);
+                const input = document.getElementById('file') as HTMLInputElement;
+                if (input) {
+                  input.files = dt.files;
+                  input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+              }}
+              onError={(msg) => setError(msg)}
+              isLoading={isLoading}
+            />
           </div>
         )}
       </div>

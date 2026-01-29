@@ -9,36 +9,26 @@ export const handleApiError = (error: any): string => {
         const status = error.response.status;
         const serverMsg = error.response.data?.error;
 
-        // If backend provided a specific message, prefer that (unless it's generic)
-        if (serverMsg && serverMsg.length < 100) {
-            // efficient fallback check could go here
+        // If backend provided a specific message, always prioritize it
+        if (serverMsg) {
+            return serverMsg;
         }
 
         switch (status) {
             case 400:
-                return serverMsg || "Bad Request: Please check your input file.";
+                return "Bad Request: The file could not be analyzed. Please ensure it is a valid PDF.";
             case 401:
-                return "Unauthorized: Please checking your OpenAI API Key in Settings.";
-            case 403:
-                return "Forbidden: You don't have permission to access this resource.";
-            case 404:
-                return "Not Found: The requested resource could not be found.";
-            case 405:
-                return "Method Not Allowed: Invalid request method.";
-            case 409:
-                return "Conflict: The request conflicts with current state.";
+                return "Invalid API Key: Access denied. Please enter a valid OpenAI API Key in Settings.";
             case 429:
-                return "Too Many Requests: You are being rate-limited by OpenAI. Please wait a moment.";
+                return "Too Many Requests: You are being rate-limited by OpenAI. Please try again in a minute.";
             case 500:
-                return "Server Error: Something went wrong on the backend. Please check server logs.";
+                return "Server Error: The backend encountered an issue. Please try a different file.";
             case 502:
-                return "Bad Gateway: The server received an invalid response from an upstream server (OpenAI).";
             case 503:
-                return "Service Unavailable: The server is temporarily overloaded or down.";
             case 504:
-                return "Gateway Timeout: The upstream server (OpenAI) took too long to respond.";
+                return "Connection Error: Unable to reach OpenAI services. Please check your internet or API status.";
             default:
-                return serverMsg || `An error occurred (${status}). Please try again.`;
+                return `An error occurred (${status}). Please try again.`;
         }
     } else if (error.request) {
         // Request made but no response received

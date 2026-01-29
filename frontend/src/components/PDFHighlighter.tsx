@@ -17,9 +17,11 @@ interface PDFHighlighterProps {
 }
 
 export const PDFHighlighter: React.FC<PDFHighlighterProps> = ({ pdfUrl, currentSegment, segments, onSegmentClick }) => {
+    // Store scaling factors per page (pageNumber -> scale)
+    const [pageScales, setPageScales] = useState<Record<number, number>>({});
     const [numPages, setNumPages] = useState<number>(0);
     const containerRef = useRef<HTMLDivElement>(null);
-    const [pageWidth] = useState(600); // Default, will update on resize?
+    const [pageWidth] = useState(600);
 
     // For scrolling to the active page
     const activePageRef = useRef<HTMLDivElement>(null);
@@ -71,36 +73,43 @@ export const PDFHighlighter: React.FC<PDFHighlighterProps> = ({ pdfUrl, currentS
                                 width={pageWidth}
                                 renderTextLayer={false}
                                 renderAnnotationLayer={false}
+                                onLoadSuccess={(page) => {
+                                    // Calculate scale: Rendered Width / Original PDF Point Width
+                                    // page.originalWidth is usually in points (1/72 inch)
+                                    const scale = pageWidth / page.originalWidth;
+                                    setPageScales(prev => ({ ...prev, [pageNum]: scale }));
+                                }}
                             />
 
                             {/* Highlight Overlay */}
-                            {/* Interactive Highlights Overlay */}
                             <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', mixBlendMode: 'multiply' }}>
                                 {(segments || []).filter(s => s.page === pageNum).map((seg) => {
                                     const isActive = currentSegment && currentSegment.id === seg.id;
                                     const rects = seg.rects && seg.rects.length > 0 ? seg.rects : [seg.bbox];
+                                    const scale = pageScales[pageNum] || 1; // Default to 1 if not loaded yet
 
                                     return rects.map((box, i) => (
                                         <div
                                             key={`${seg.id}-${i}`}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                // Find original index
                                                 const originalIndex = segments.findIndex(s => s === seg);
                                                 if (originalIndex !== -1) onSegmentClick(originalIndex);
                                             }}
                                             style={{
                                                 position: 'absolute',
-                                                left: `${box[0]}px`,
-                                                top: `${box[1]}px`,
-                                                width: `${box[2] - box[0]}px`,
-                                                height: `${box[3] - box[1]}px`,
-                                                backgroundColor: isActive ? 'rgba(255, 255, 0, 0.4)' : undefined, // Handled by CSS on hover now
+                                                // Apply Scale to Coordinates
+                                                left: `${box[0] * scale}px`,
+                                                top: `${box[1] * scale}px`,
+                                                width: `${(box[2] - box[0]) * scale}px`,
+                                                height: `${(box[3] - box[1]) * scale}px`,
+
+                                                backgroundColor: isActive ? 'rgba(255, 255, 0, 0.4)' : undefined,
                                                 border: isActive ? '2px solid rgba(255, 255, 0, 0.8)' : 'none',
-                                                borderRadius: '4px',
+                                                borderRadius: '3px',
                                                 cursor: 'pointer',
                                                 pointerEvents: 'auto',
-                                                touchAction: 'manipulation', // Better for tapping
+                                                touchAction: 'manipulation',
                                             }}
                                             className={!isActive ? "pdf-hover-highlight" : ""}
                                         />

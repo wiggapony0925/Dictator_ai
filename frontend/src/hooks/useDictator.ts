@@ -152,12 +152,23 @@ export const useDictator = () => {
 
             const audioUrl = res.data.audio_url;
             audioRef.current.src = audioUrl;
+
+            // Add one-time error listener for this playback attempt
+            const errorHandler = () => {
+                setError("Audio Error: Failed to load audio segment (404). Please try regenerating.");
+                setIsPlaying(false);
+            };
+            audioRef.current.addEventListener('error', errorHandler, { once: true });
+
             const playPromise = audioRef.current.play();
             if (playPromise !== undefined) {
                 playPromise.catch(err => {
+                    audioRef.current.removeEventListener('error', errorHandler); // Cleanup
                     if (err.name !== 'AbortError') {
                         console.error("Playback failed:", err);
                         if (currentSegmentIndex === index) setIsPlaying(false);
+                        // Don't overwrite specific error if 404 handler fired
+                        if (!error) setError("Playback Error: Unable to play audio.");
                     }
                 });
             }
@@ -203,7 +214,7 @@ export const useDictator = () => {
             // Small timeout to debounce rapid changes
             const timer = setTimeout(() => {
                 playSegment(currentSegmentIndex);
-            }, 500);
+            }, 200); // reduced from 500 for snappier feel
             return () => clearTimeout(timer);
         }
     }, [voice]);
@@ -246,10 +257,39 @@ export const useDictator = () => {
         };
     }, [currentSegmentIndex, segments, apiKey, file]); // Re-bind when segment changes
 
+    // Reset State (Remove PDF)
+    const resetState = () => {
+        // Stop Audio
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+            audioRef.current.src = "";
+        }
+
+        // Abort any pending requests
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        setFile(null);
+        setSegments([]);
+        setPdfUrl('');
+        setCurrentSegmentIndex(-1);
+        setIsPlaying(false);
+        setHasStartedReading(false);
+        setError(null);
+        setIsLoading(false);
+
+        // Reset file input if exists (cleaner way would be ref, but this works given current structure)
+        const fileInput = document.getElementById('file') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+    };
+
     return {
         apiKey, setApiKey,
         file, handleFileChange,
         handleConvert,
+        resetState,
         segments, pdfUrl,
         currentSegmentIndex,
         isPlaying,

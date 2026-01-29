@@ -21,6 +21,10 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.route('/static/audio/<filename>')
+def serve_audio(filename):
+    return send_from_directory('static/audio', filename)
+
 @app.route('/convert', methods=['POST'])
 def convert():
     if 'file' not in request.files:
