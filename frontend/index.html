@@ -4,22 +4,37 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/logo.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+  <!-- Viewport: Prevent auto-scale on input focus for mobile (user-scalable=no is controversial but requested for 'app' feel) -->
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+  <!-- SEO -->
+  <title>Dictator AI | Intelligent Audio Reader</title>
   <meta name="description"
-    content="Turn any PDF into an interactive audio experience. smart parsing, AI narration, and real-time syncing." />
+    content="Transform PDFs into interactive audio. Dictator AI uses advanced synthesis to read your documents with human-like clarity." />
+  <meta name="theme-color" content="#0f172a" />
 
-  <!-- Open Graph (iMessage / Socials) -->
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Dictator AI 🎙️" />
-  <meta property="og:description" content="Listen to your PDFs. Interactive AI Reader with real-time text syncing." />
-  <meta property="og:image" content="/logo.png" />
-
-  <!-- Apple Mobile Web App -->
+  <!-- PWA / Mobile Capabilities -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Dictator AI" />
+  <link rel="apple-touch-icon" href="/logo.png" />
 
-  <title>Dictator AI - Intelligent PDF Reader</title>
+  <!-- Open Graph / Social Sharing -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Dictator AI" />
+  <meta property="og:title" content="Dictator AI - Listen to your Documents" />
+  <meta property="og:description"
+    content="The smartest way to read. Upload a PDF and listen instantly with interactive tracking." />
+  <meta property="og:image" content="/logo.png" />
+  <meta property="og:url" content="https://dictator.ai" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Preconnect for Performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>

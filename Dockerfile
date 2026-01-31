@@ -14,8 +14,12 @@ RUN npm run build
 FROM python:3.11-slim
 WORKDIR /app
 
+
 # Install system dependencies for PyMuPDF
 # (build-essential/gcc might be needed depending on the wheel availability)
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*

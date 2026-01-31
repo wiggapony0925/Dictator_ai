@@ -102,7 +102,22 @@ The application is containerized with a highly optimized **Multi-Stage Build**.
 
 ---
 
-## 🎨 Architecture & Styles
+
+## 📱 Mobile & Tablet Usage
+
+To access the application from your iPhone, iPad, or Android device on the same WiFi network:
+
+1.  Open a terminal in the project root.
+2.  Run the helper script:
+    ```bash
+    ./scripts/start-mobile.sh
+    ```
+3.  The script will build the Docker container and print a URL (e.g., `http://192.168.1.5:5001`).
+4.  Enter that URL in your mobile browser.
+
+> **Note:** Ensure your device and computer are on the same WiFi network.
+
+## Architecture & Styles
 
 The project follows a strict **SCSS BEM** methodology for clean, maintainable styles.
 
@@ -123,3 +138,6 @@ The project follows a strict **SCSS BEM** methodology for clean, maintainable st
 
 ## 📄 License
 MIT License. Created by Jeffrey Fernandez.
+
+
+## in the future add a chat bot text to the app so you can ask it questions

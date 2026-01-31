@@ -1,73 +1,46 @@
-# React + TypeScript + Vite
+# Dictator AI - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Dictator AI** is an intelligent PDF reader that turns documents into interactive audio experiences. This frontend is built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## 🚀 Key Features
+- **Smart Parsing**: Upload PDFs and see them parsed into intelligent segments.
+- **Audio Sync**: Click any text to hear it spoken instantly.
+- **Micro-Animations**: A premium, fluid user interface.
+- **Mobile Ready**: Optimized for touch devices.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🛠️ Setup & Development
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Installation
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Development Server
+```bash
+npm run dev
+```
+Runs the app in development mode. Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Formatting & Linting
+```bash
+npm run lint:fix
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Path Aliases
+We use `@/` to point to the `src/` directory.
+- `import Button from '@/components/Button'`
+- `import { useDictator } from '@/hooks/useDictator'`
+
+## 📁 Project Structure
+
+```
+src/
+├── assets/         # Static assets
+├── components/     # Reusable UI components
+├── context/        # React Context (State)
+├── hooks/          # Custom Hooks (Logic)
+├── services/       # API Services
+├── styles/         # SCSS Variables & Global Styles
+├── utils/          # Helper functions
+└── App.tsx         # Main entry component
 ```
